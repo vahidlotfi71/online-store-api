@@ -14,12 +14,12 @@ type Order struct {
 	ID         uint        `gorm:"PrimaryKey" json:"id"`
 	UserID     uint        `gorm:"not null" json:"user-id"`
 	Status     OrderStatus `gorm:"default:pending" json:"status"`
-	TotalPrice int64       `gorm:"not null" json:"total_price"`     //تومان
-	Items      []OrderItem `gorm:"foreignKey:OrderID" json:"items"` //صریحاً مشخص می‌کند که فیلد OrderID داخل OrderItem کلید خارجی مربوط به این سفارش است.
+	TotalPrice int64       `gorm:"not null" json:"total_price"` //تومان
+	Items      []OrderItem `gorm:"foreignKey:OrderID" json:"items"`
 	CreateAt   time.Time
 	UpdateAt   time.Time
 	//Relation
-	User User `gorm:"foreignKey:UserID" json:"user,omitempty"` //مشخص می‌کند فیلد UserID داخل همین جدول (orders) کلید خارجی است که به جدول کاربران اشاره می‌کند.
+	User User `gorm:"foreignKey:UserID" json:"user,omitempty"`
 }
 
 type OrderItem struct {
