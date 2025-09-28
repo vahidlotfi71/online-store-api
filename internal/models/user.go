@@ -6,7 +6,7 @@ type User struct {
 	ID         uint   `json:"id" gorm:"primaryKey"`
 	FirstName  string `json:"first_name" gorm:"not null"`
 	LastName   string `json:"last_name" gorm:"not null"`
-	Phone      string `json:"Phone" gorm:"unique;not null"`
+	Phone      string `json:"phone" gorm:"unique;not null"`
 	Address    string `json:"address" gorm:"not null"`
 	NationalID string `json:"national_ID" gorm:"unique;not null"`
 	Password   string `json:"-" gorm:"not null"`
