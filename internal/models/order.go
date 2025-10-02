@@ -14,7 +14,7 @@ type Order struct {
 	ID         uint        `gorm:"PrimaryKey" json:"id"`
 	UserID     uint        `gorm:"not null" json:"user-id"`
 	Status     OrderStatus `gorm:"default:pending" json:"status"`
-	TotalPrice int64       `gorm:"not null" json:"total_price"` //تومان
+	TotalPrice float64     `gorm:"not null" json:"total_price"` //تومان
 	Items      []OrderItem `gorm:"foreignKey:OrderID" json:"items"`
 	CreateAt   time.Time
 	UpdateAt   time.Time
@@ -23,11 +23,11 @@ type Order struct {
 }
 
 type OrderItem struct {
-	ID        uint  `gorm:"primaryKey" json:"id"`
-	OrderID   uint  `gorm:"not null" json:"order_id"`
-	ProductID uint  `gorm:"not null" json:"product_id"`
-	Quantity  int   `gorm:"not null" json:"quantity"`
-	Price     int64 `gorm:"not null" json:"price"` // قیمت واحد در زمان خرید
+	ID        uint    `gorm:"primaryKey" json:"id"`
+	OrderID   uint    `gorm:"not null" json:"order_id"`
+	ProductID uint    `gorm:"not null" json:"product_id"`
+	Quantity  int     `gorm:"not null" json:"quantity"`
+	Price     float64 `gorm:"not null" json:"price"` // قیمت واحد در زمان خرید
 	//Relations
 	Product Product `gorm:"foreignKey:ProductID" json:"product,omitempty"`
 }
