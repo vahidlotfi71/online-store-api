@@ -21,3 +21,13 @@ func MaxLength(n int) Rule {
 		return true, "", nil
 	}
 }
+
+func LengthBetween(min, max int) Rule {
+	return func(value string, fieldName string) (bool, string, error) {
+		length := len(value)
+		if length < min || length > max {
+			return false, fmt.Sprintf("%s باید بین %d و %d کاراکتر باشد", fieldName, min, max), nil
+		}
+		return true, "", nil
+	}
+}
