@@ -1,6 +1,9 @@
 package validations
 
-import "github.com/vahidlotfi71/online-store-api.git/internal/rules"
+import (
+	"github.com/vahidlotfi71/online-store-api.git/internal/routes"
+	"github.com/vahidlotfi71/online-store-api.git/internal/rules"
+)
 
 func RegisterValidation() []rules.FieldRules {
 	return []rules.FieldRules{
@@ -63,5 +66,11 @@ func LoginValidation() []rules.FieldRules {
 				rules.Required(),
 			},
 		},
+	}
+}
+
+func VerifyPhoneValidation()[]rules.FieldRules{
+	return []rules.FieldRules{
+		{Field: "phone", Rules: []rules.Rule{rules.Required() , rules.Phone()}}
 	}
 }
