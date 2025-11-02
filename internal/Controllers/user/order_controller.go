@@ -89,21 +89,21 @@ func (oc *OrderController) CreateOrder(c *fiber.Ctx) error {
 
 	user, _ := oc.AuthService.GetUserByID(userID)
 
-	msg := fmt.Sprintf("سلام %s %s\nخرید شما با موفقیت انجام شد.\nمحصولات: %d عدد\nقیمت کل: %d تومان\nبا تشکر، فروشگاه ما",
+	msg := fmt.Sprintf("Hello %s %s,\nYour purchase was successful.\nProducts: %d item(s)\nTotal price: %d Tomans\nThank you, Our Store",
 		user.FirstName,
 		user.LastName,
 		len(order.Items),
 		int(order.TotalPrice))
 	oc.SMSService.SendSMS(user.Phone, msg)
 
-	return c.JSON(fiber.Map{"success": true, "message": "خرید با موفقیت انجام شد", "data": order})
+	return c.JSON(fiber.Map{"success": true, "message": "Purchase completed successfully", "data": order})
 }
 
 func (oc *OrderController) GetUserOrders(c *fiber.Ctx) error {
 	userID := c.Locals("userID").(uint)
 	list, err := oc.OrderService.GetUserOrders(userID)
 	if err != nil {
-		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "خطا در دریافت اطلاعات")
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Error retrieving data")
 	}
 	return utils.SuccessResponse(c, list)
 }

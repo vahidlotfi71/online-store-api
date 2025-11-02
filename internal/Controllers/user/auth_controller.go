@@ -31,12 +31,12 @@ func (ac *AuthController) Register(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&input); err != nil {
-		return utils.ErrorResponse(c, fiber.StatusBadRequest, "فرمت داده‌ها نادرست است")
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "The data format is incorrect.")
 	}
 
 	// بررسی می‌کنیم که این شماره موبایل قبلاً ثبت نشده باشه.
 	if _, err := ac.AuthService.GetUserByPhone(input.Phone); err == nil {
-		return utils.ErrorResponse(c, fiber.StatusConflict, "این شماره موبایل قبلاً ثبت شده است")
+		return utils.ErrorResponse(c, fiber.StatusConflict, "This phone number is already registered.")
 	}
 
 	// پسورد هش میشه
@@ -58,17 +58,17 @@ func (ac *AuthController) Register(c *fiber.Ctx) error {
 
 	// کاربر در دیتابیس ذخیره میشه.
 	if err := ac.AuthService.CreateUser(user); err != nil {
-		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "خطا در ثبت اطلاعات")
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Error registering data")
 	}
 
 	// پیامک کد تایید برای کاربر فرستاده میشه.
-	msg := fmt.Sprintf("کد تایید شما: %s", code)
+	msg := fmt.Sprintf("Your verification code: %s", code)
 	ac.SMSService.SendSMS(input.Phone, msg)
 
 	// موفقیت ثبت‌نام و user_id برگردونده میشه.
 	return c.JSON(fiber.Map{
 		"success": true,
-		"message": "ثبت نام با موفقیت انجام شد",
+		"message": "Registration completed successfully",
 		"data": fiber.Map{
 			"user_id": user.ID,
 		},
@@ -83,27 +83,27 @@ func (ac *AuthController) Login(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&input); err != nil {
-		return utils.ErrorResponse(c, fiber.StatusBadRequest, "فرمت داده‌ها نادرست است")
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "The data format is incorrect.")
 	}
 
 	// کاربر از دیتابیس پیدا میشه.
 	// پسورد بررسی میشه (مقایسه با هش).
 	user, err := ac.AuthService.GetUserByPhone(input.Phone)
 	if err != nil || !utils.CheckPassword(input.Password, user.Password) {
-		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "شماره موبایل یا رمز عبور اشتباه است")
+		return utils.ErrorResponse(c, fiber.StatusUnauthorized, "The phone number or password is incorrect.")
 	}
 
 	// اگر شماره تایید نشده باشه → اجازه ورود نداره.
 	if !user.IsVerified {
-		return utils.ErrorResponse(c, fiber.StatusForbidden, "شماره موبایل شما تایید نشده است")
+		return utils.ErrorResponse(c, fiber.StatusForbidden, "Your phone number is not verified.")
 	}
 	// اگر همه‌چیز درست باشه → توکن JWT ساخته میشه.
 	token, err := utils.GenerateJWT(user.ID, user.Phone, user.Role, ac.AuthService.CFG)
 	if err != nil {
-		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "خطا در ایجاد توکن")
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Error generating token")
 	}
 
-	return c.JSON(fiber.Map{"success": true, "message": "ورود با موفقیت انجام شد", "data": fiber.Map{"token": token, "user": user}})
+	return c.JSON(fiber.Map{"success": true, "message": "Login successful", "data": fiber.Map{"token": token, "user": user}})
 }
 
 // شماره و کد را می‌گیریم.
@@ -118,22 +118,22 @@ func (ac *AuthController) VerifyPhone(c *fiber.Ctx) error {
 		Code  string `json:"code"`
 	}
 	if err := c.BodyParser(&input); err != nil {
-		return utils.ErrorResponse(c, fiber.StatusBadRequest, "فرمت دادهها نادرست است")
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "The data format is incorrect.")
 	}
 	user, err := ac.AuthService.GetUserByPhone(input.Phone)
 	if err != nil {
-		return utils.ErrorResponse(c, fiber.StatusNotFound, "کاربر یافت نشد")
+		return utils.ErrorResponse(c, fiber.StatusNotFound, "User not found")
 	}
 	if user.VerifyCode != input.Code {
-		return utils.ErrorResponse(c, fiber.StatusBadRequest, "کد تایید اشتباه است")
+		return utils.ErrorResponse(c, fiber.StatusBadRequest, "The verification code is incorrect.")
 	}
 	user.IsVerified = true
 	user.VerifyCode = ""
 	if err := ac.AuthService.UpdateUser(user); err != nil {
-		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "خطادرفعال‌سازی حساب")
+		return utils.ErrorResponse(c, fiber.StatusInternalServerError, "Account activation error")
 	}
 	token, _ := utils.GenerateJWT(user.ID, user.Phone, user.Role, ac.AuthService.CFG)
-	return c.JSON(fiber.Map{"success": true, "message": "حساب کاربری با موفقیت فعال شد", "data": fiber.Map{"token": token, "user": user}})
+	return c.JSON(fiber.Map{"success": true, "message": "Account activated successfully", "data": fiber.Map{"token": token, "user": user}})
 }
 
 func (ac *AuthController) GetProfile(c *fiber.Ctx) error {
@@ -142,7 +142,7 @@ func (ac *AuthController) GetProfile(c *fiber.Ctx) error {
 
 	user, err := ac.AuthService.GetUserByID(userID)
 	if err != nil {
-		return utils.ErrorResponse(c, fiber.StatusNotFound, "کاربر یافت نشد")
+		return utils.ErrorResponse(c, fiber.StatusNotFound, "User not found")
 	}
 
 	return utils.SuccessResponse(c, user)
