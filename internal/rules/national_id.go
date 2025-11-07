@@ -8,7 +8,7 @@ import (
 func NationalID() Rule {
 	return func(v, f string) (bool, string, error) {
 		if matched, _ := regexp.MatchString(`^\d{10}$`, v); !matched {
-			return false, "کد ملی باید ۱۰ رقم باشد", nil
+			return false, "National code must be 10 digits", nil
 		}
 		sum := 0
 		for i := 0; i < 9; i++ {
@@ -19,11 +19,11 @@ func NationalID() Rule {
 		check, _ := strconv.Atoi(string(v[9]))
 		if remainder < 2 {
 			if check != remainder {
-				return false, "کد ملی معتبر نیست", nil
+				return false, "National code is not valid", nil
 			}
 		} else {
 			if check != (11 - remainder) {
-				return false, "کد ملی معتبر نیست", nil
+				return false, "National code is not valid", nil
 			}
 		}
 		return true, "", nil
