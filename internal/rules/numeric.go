@@ -1,16 +1,24 @@
-package rules
+package Rules
 
 import (
 	"fmt"
-	"regexp"
+	"strconv"
+
+	"github.com/gofiber/fiber/v2"
 )
 
-func Numeric() Rule {
-	return func(v, f string) (bool, string, error) {
-		if matched, _ := regexp.MatchString(`^\d+$`, v); !matched {
-			return false, fmt.Sprintf("%s باید عدد باشد", f), nil
+func Numeric() ValidationRule {
+	return func(c *fiber.Ctx, field_name string) (passed bool, message string, flags *Flags, err error) {
+		value := c.FormValue(field_name)
+		// اگر فیلد خالی باشد، بررسی نکن (با Required چک شود)
+		if value == "" {
+			return true, "", nil, nil
 		}
-		return true, "", nil
+		// برسی عدد بودن
+		if _, err := strconv.Atoi(value); err != nil {
+			message := fmt.Sprintf("The %s field must be a number", field_name)
+			return false, message, nil, nil
+		}
+		return true, "", nil, nil
 	}
-
 }

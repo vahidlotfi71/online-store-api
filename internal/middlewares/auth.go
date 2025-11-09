@@ -12,7 +12,7 @@ func AuthMiddleware(cfg *config.Config) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		auth := c.Get("Authorization") //Check for the presence of the Authorization header
 		if auth == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"success": false, "message": "توکن ارسال نشده است"})
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"success": false, "message": "Token not sent"})
 		}
 		//The auth value is similar to this:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6...
 		tokenStr := strings.TrimPrefix(auth, "Bearer ")
@@ -25,7 +25,7 @@ func AuthMiddleware(cfg *config.Config) fiber.Handler {
 			return []byte(cfg.JWT.Secret), nil
 		})
 		if err != nil || !token.Valid {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"success": false, "message": "توکن نامعتبر است"})
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"success": false, "message": "Invalid token"})
 		}
 		// Extracting information from token (Claims)
 		claims := token.Claims.(jwt.MapClaims)

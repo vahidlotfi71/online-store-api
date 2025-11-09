@@ -13,7 +13,7 @@ func ValidationMiddleware(fieldRules []rules.FieldRules) fiber.Handler {
 		if err := c.BodyParser(&body); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
-				"message": "فرمت داده داشت نمی باشد ",
+				"message": "Data format is not valid",
 			})
 		}
 
@@ -21,7 +21,7 @@ func ValidationMiddleware(fieldRules []rules.FieldRules) fiber.Handler {
 		if len(body) == 0 {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"success": false,
-				"message": "داده ی ارسال نشده است",
+				"message": "No data sent",
 			})
 		}
 

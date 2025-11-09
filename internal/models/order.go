@@ -1,4 +1,4 @@
-package models
+package Models
 
 import "time"
 
@@ -16,8 +16,9 @@ type Order struct {
 	Status     OrderStatus `gorm:"default:pending" json:"status"`
 	TotalPrice float64     `gorm:"not null" json:"total_price"` //تومان
 	Items      []OrderItem `gorm:"foreignKey:OrderID" json:"items"`
-	CreateAt   time.Time
-	UpdateAt   time.Time
+	CreateAt   time.Time   `json:"created_at"`
+	UpdateAt   time.Time   `json:"updated_at"`
+	Deleted_at *time.Time  `json:"deleted_at"`
 	//Relation
 	User User `gorm:"foreignKey:UserID" json:"user,omitempty"`
 }

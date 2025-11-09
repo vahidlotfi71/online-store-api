@@ -1,13 +1,14 @@
-package rules
+package Rules
 
-type Rule func(value string, fieldName string) (passed bool, message string, err error)
+import "github.com/gofiber/fiber/v2"
+
+type ValidationRule func(c *fiber.Ctx, field_name string) (passed bool, message string, flags *Flags, err error)
 
 type FieldRules struct {
-	Field string `json:"field"`
-	Rules []Rule `json:"rules"`
+	FieldName string
+	Rules     []ValidationRule
 }
 
-type ValidationError struct {
-	Field   string `json:"field_name"`
-	Message string `json:"message"`
+type Flags struct {
+	IsNull bool
 }
