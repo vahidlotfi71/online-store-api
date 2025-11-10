@@ -2,21 +2,17 @@ package Rules
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func Numeric() ValidationRule {
+func LengthBetween(min, max uint) ValidationRule {
 	return func(c *fiber.Ctx, field_name string) (passed bool, message string, flags *Flags, err error) {
 		value := c.FormValue(field_name)
 
-		if value == "" {
-			return true, "", nil, nil
-		}
+		message = fmt.Sprintf("The %s field must be between %d  and %d characters", field_name, min, max)
 
-		if _, err := strconv.Atoi(value); err != nil {
-			message := fmt.Sprintf("The %s field must be a number", field_name)
+		if len(value) > int(max) || len(value) < int(min) {
 			return false, message, nil, nil
 		}
 		return true, "", nil, nil
