@@ -2,7 +2,7 @@ package Models
 
 import "time"
 
-type User struct {
+type Admin struct {
 	ID         uint       `json:"id" gorm:"primaryKey"`
 	FirstName  string     `json:"first_name" gorm:"not null"`
 	LastName   string     `json:"last_name" gorm:"not null"`
@@ -17,4 +17,4 @@ type User struct {
 	Deleted_at *time.Time `json:"deleted_at"`
 }
 
-func (User) TableName() string { return "users" }
+func (Admin) TableName() string { return "admin" }
