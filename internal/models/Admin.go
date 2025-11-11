@@ -10,6 +10,7 @@ type Admin struct {
 	Address    string     `json:"address" gorm:"not null"`
 	NationalID string     `json:"national_ID" gorm:"unique;not null"`
 	Password   string     `json:"-" gorm:"not null"`
+	Role       string     `json:"-" gorm:"not null;default:admin"` // مقدار پیش‌فرض admin
 	IsVerified bool       `json:"is_verified" gorm:"default:false"`
 	VerifyCode string     `json:"-"  gorm:"size:6"`
 	CreateAt   time.Time  `json:"created_at"`

@@ -9,7 +9,7 @@ import (
 	"github.com/vahidlotfi71/online-store-api.git/internal/Utils"
 )
 
-func UserAuthMiddleware(c *fiber.Ctx) error {
+func AdminAuthMiddleware(c *fiber.Ctx) error {
 	token := c.Get("Authorization")
 
 	if token == "" {
@@ -33,18 +33,18 @@ func UserAuthMiddleware(c *fiber.Ctx) error {
 		})
 	}
 
-	// بررسی نقش کاربر
-	if claims.Role != "user" {
+	// بررسی نقش ادمین
+	if claims.Role != "admin" {
 		return c.Status(403).JSON(fiber.Map{
-			"message": "Access denied. User role required",
+			"message": "Access denied. Admin role required",
 		})
 	}
 
-	var user Models.User
-	if err := Config.DB.First(&user, claims.ID).Error; err != nil {
-		return c.Status(401).JSON(fiber.Map{"message": "User not found"})
+	var admin Models.Admin
+	if err := Config.DB.First(&admin, claims.ID).Error; err != nil {
+		return c.Status(401).JSON(fiber.Map{"message": "Admin not found"})
 	}
 
-	c.Locals("user", user)
+	c.Locals("admin", admin)
 	return c.Next()
 }
