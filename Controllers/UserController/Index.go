@@ -1,0 +1,20 @@
+package UserController
+
+import (
+	"github.com/gofiber/fiber/v2"
+	"github.com/vahidlotfi71/online-store-api.git/Config"
+	"github.com/vahidlotfi71/online-store-api.git/Resources/UserResource"
+	"github.com/vahidlotfi71/online-store-api.git/internal/Models/User"
+)
+
+func Index(c *fiber.Ctx) error {
+	users, meta, err := User.Paginate(Config.DB.Where("deleted_at IS NULL").Order("id"), c)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"message": err.Error()})
+	}
+
+	return c.Status(200).JSON(fiber.Map{
+		"data":     UserResource.Collection(users),
+		"metadata": meta,
+	})
+}

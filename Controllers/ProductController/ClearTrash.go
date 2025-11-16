@@ -1,0 +1,50 @@
+package ProductController
+
+import (
+	"strconv"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/vahidlotfi71/online-store-api.git/Config"
+	"github.com/vahidlotfi71/online-store-api.git/internal/Models"
+)
+
+func ClearTrash(c *fiber.Ctx) error {
+	limitStr := c.Query("limit", "10")
+	limit, _ := strconv.Atoi(limitStr)
+	if limit <= 0 || limit > 50 {
+		limit = 10
+	}
+
+	tx := Config.DB.Begin()
+	if tx.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "DB connection error"})
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var products []Models.Product
+	if err := tx.Unscoped().Where("deleted_at IS NOT NULL").Limit(limit).Find(&products).Error; err != nil {
+		tx.Rollback()
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
+	}
+
+	result := tx.Unscoped().Delete(&Models.Product{}, "deleted_at IS NOT NULL AND id IN (?)",
+		tx.Model(&Models.Product{}).Select("id").Where("deleted_at IS NOT NULL").Limit(limit))
+	if result.Error != nil {
+		tx.Rollback()
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": result.Error.Error()})
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Commit failed"})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":       "Trash cleared successfully",
+		"cleared_count": result.RowsAffected,
+	})
+}

@@ -1,0 +1,50 @@
+package Order
+
+import (
+	"errors"
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/vahidlotfi71/online-store-api.git/internal/Models"
+	"github.com/vahidlotfi71/online-store-api.git/internal/Utils/Http"
+	"gorm.io/gorm"
+)
+
+func Paginate(tx *gorm.DB, c *fiber.Ctx) (orders []Models.Order, meta Http.PaginationMetadata, err error) {
+	tx, meta = Http.Paginate(tx, c)
+	err = tx.Preload("Items.Product").Find(&orders).Error
+	return
+}
+
+func FindByID(tx *gorm.DB, id uint) (order Models.Order, err error) {
+	err = tx.Where("deleted_at IS NULL").Preload("Items.Product").First(&order, id).Error
+	return
+}
+
+func UpdateStatus(tx *gorm.DB, id uint, status Models.OrderStatus) error {
+	result := tx.Model(&Models.Order{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Update("status", status)
+
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("order not found or not active")
+	}
+	return nil
+}
+
+func SoftDelete(tx *gorm.DB, id uint) error {
+	result := tx.Model(&Models.Order{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Update("deleted_at", time.Now())
+
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return errors.New("order not found or already deleted")
+	}
+	return nil
+}
