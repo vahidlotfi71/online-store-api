@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Models"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Utils/Http"
+	"github.com/vahidlotfi71/online-store-api.git/Models"
+	"github.com/vahidlotfi71/online-store-api.git/Utils/Http"
 	"gorm.io/gorm"
 )
 

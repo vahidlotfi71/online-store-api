@@ -2,8 +2,8 @@ package Middlewares
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Providers"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Rules"
+	"github.com/vahidlotfi71/online-store-api.git/Providers"
+	"github.com/vahidlotfi71/online-store-api.git/Rules"
 )
 
 func ValidationMiddleware(schema []Rules.FieldRules) func(c *fiber.Ctx) error {

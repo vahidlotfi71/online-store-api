@@ -4,7 +4,7 @@ package OrderResource
 import (
 	"time"
 
-	"github.com/vahidlotfi71/online-store-api.git/internal/Models"
+	"github.com/vahidlotfi71/online-store-api.git/Models"
 )
 
 type OrderItemDTO struct {

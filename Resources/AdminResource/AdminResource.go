@@ -1,10 +1,9 @@
-// file: Resources/AdminResource/AdminResource.go
 package AdminResource
 
 import (
 	"time"
 
-	"github.com/vahidlotfi71/online-store-api.git/internal/Models"
+	"github.com/vahidlotfi71/online-store-api.git/Models"
 )
 
 type AdminDTO struct {

@@ -1,11 +1,10 @@
-// file: internal/Controllers/Admin/AdminController/Trash.go
 package AdminController
 
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/vahidlotfi71/online-store-api.git/Config"
+	"github.com/vahidlotfi71/online-store-api.git/Models/Admin"
 	"github.com/vahidlotfi71/online-store-api.git/Resources/AdminResource"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Models/Admin"
 )
 
 func Trash(c *fiber.Ctx) error {

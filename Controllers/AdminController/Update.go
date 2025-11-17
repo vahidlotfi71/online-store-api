@@ -7,9 +7,9 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/vahidlotfi71/online-store-api.git/Config"
+	"github.com/vahidlotfi71/online-store-api.git/Models/Admin"
 	"github.com/vahidlotfi71/online-store-api.git/Resources/AdminResource"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Models/Admin"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Utils"
+	"github.com/vahidlotfi71/online-store-api.git/Utils"
 )
 
 type AdminUpdateRequest struct {

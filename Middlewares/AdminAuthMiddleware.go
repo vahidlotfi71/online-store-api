@@ -5,8 +5,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/vahidlotfi71/online-store-api.git/Config"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Models"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Utils"
+	"github.com/vahidlotfi71/online-store-api.git/Models"
+	"github.com/vahidlotfi71/online-store-api.git/Utils"
 )
 
 func AdminAuthMiddleware(c *fiber.Ctx) error {

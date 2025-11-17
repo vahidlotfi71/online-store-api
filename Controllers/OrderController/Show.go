@@ -5,8 +5,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/vahidlotfi71/online-store-api.git/Config"
+	"github.com/vahidlotfi71/online-store-api.git/Models"
 	"github.com/vahidlotfi71/online-store-api.git/Resources/OrderResource"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Models"
 	"gorm.io/gorm"
 )
 
