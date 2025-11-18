@@ -4,41 +4,37 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mahdic200/weava/Config"
+	"github.com/gofiber/fiber/v2"
 	"github.com/spf13/cobra"
+	"github.com/vahidlotfi71/online-store-api.git/Config"
+	"github.com/vahidlotfi71/online-store-api.git/Routes"
 )
 
-type Route struct {
-	Name   string
-	Method string
-	Path   string
-}
-
-// routesCmd represents the routes command
 var routesCmd = &cobra.Command{
 	Use:   "routes",
 	Short: "Shows defined routes list",
-	Long:  `shows a list of defined routes in your application .`,
+	Long:  `Displays a clean list of all registered routes.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		type SingleRoute struct {
-			Name   string
-			Path   string
-			Method string
+		// نیاز به app داريم؛ پس يکبار مي‌سازيم (بدون listen)
+		if err := Config.Getenv(); err != nil {
+			fmt.Println("env load:", err)
+			return
 		}
-		routes := make([]SingleRoute, 0)
-	biggerLoop:
-		for _, route := range Config.App.GetRoutes() {
-			if route.Path != "/*" && route.Name != "" {
-				for _, i_route := range routes {
-					if i_route.Name == route.Name || (strings.Contains(route.Name, "index") && route.Method == "HEAD") {
-						continue biggerLoop
-					}
-				}
-				routes = append(routes, SingleRoute{Name: route.Name, Path: route.Path, Method: route.Method})
+		db := Config.DB // خطا را لاگ نمی‌کنیم چون فقط لیست می‌خواهیم
+		app := fiber.New()
+		Routes.SetupRoutes(app)
+
+		type routeDTO struct{ Method, Path, Name string }
+		list := []routeDTO{}
+		for _, r := range app.GetRoutes() {
+			if r.Path == "/*" || (r.Method == "HEAD" && strings.Contains(r.Name, "index")) {
+				continue
 			}
+			list = append(list, routeDTO{r.Method, r.Path, r.Name})
 		}
-		for _, route := range routes {
-			fmt.Printf("%v\n", route)
+		fmt.Println("Method | Path                         | Name")
+		for _, r := range list {
+			fmt.Printf("%-6s | %-28s | %s\n", r.Method, r.Path, r.Name)
 		}
 	},
 }

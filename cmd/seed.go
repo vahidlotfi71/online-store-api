@@ -2,46 +2,51 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"time"
+	"log"
 
-	"github.com/mahdic200/weava/Config"
-	"github.com/mahdic200/weava/Models/User"
-	"github.com/mahdic200/weava/Utils"
-	"github.com/mahdic200/weava/Utils/ProgressBars/ProgressBar"
 	"github.com/spf13/cobra"
+	"github.com/vahidlotfi71/online-store-api.git/Config"
+	"github.com/vahidlotfi71/online-store-api.git/Models"
+	"github.com/vahidlotfi71/online-store-api.git/Utils"
+	"gorm.io/gorm"
 )
 
-// seedCmd represents the seed command
-var seedCmd = &cobra.Command{
-	Use:   "seed",
-	Short: "Seeds the database",
-	Long:  `Seeds the database`,
-	Run: func(cmd *cobra.Command, args []string) {
-		bar := ProgressBar.Default("Seeding [green]Database[reset] :", 100_000)
-
-		tx := Config.DB
-		pass, _ := Utils.GenerateHashPassword("password")
-
-		for i := 1; i <= 100_000; i++ {
-			data := map[string]string{
-				"first_name": "admin",
-				"email":      fmt.Sprintf("user_%d@gmail.com", i),
-				"phone":      fmt.Sprintf("0911%07d", i),
-				"password":   pass,
-				"created_at": time.Now().String(),
-			}
-			if err := User.Create(tx, data).Error; err != nil {
-				fmt.Printf("\nCould not seed the database : %s\n", err.Error())
-				bar.Exit()
-				os.Exit(2)
-			}
-			bar.Add(1)
-		}
-	},
-}
+var users uint
 
 func init() {
 	rootCmd.AddCommand(seedCmd)
-	// seedCmd.Flags().IntVarP()
+	seedCmd.Flags().UintVarP(&users, "users", "u", 100, "number of fake users")
+}
+
+var seedCmd = &cobra.Command{
+	Use:   "seed",
+	Short: "Seed database with fake users",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := Config.Getenv(); err != nil {
+			log.Fatalf("env: %v", err)
+		}
+		err := Config.Connect()
+		if err != nil {
+			log.Fatalf("db: %v", err)
+		}
+		seedUsers(Config.DB, users)
+		fmt.Println("✅ seeding done")
+	},
+}
+
+func seedUsers(db *gorm.DB, n uint) {
+	hash, _ := Utils.GenerateHashPassword("password")
+	for i := 1; i <= int(n); i++ {
+		u := Models.User{
+			FirstName:  fmt.Sprintf("User%d", i),
+			LastName:   "Fake",
+			Phone:      fmt.Sprintf("0911%07d", i),
+			Address:    "Tehran",
+			NationalID: fmt.Sprintf("%010d", i),
+			Password:   hash,
+			Role:       "user",
+			IsVerified: true,
+		}
+		db.FirstOrCreate(&u, Models.User{Phone: u.Phone})
+	}
 }

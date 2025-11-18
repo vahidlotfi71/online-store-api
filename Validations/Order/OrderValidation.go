@@ -2,8 +2,8 @@ package OrderValidation
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Middlewares"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Rules"
+	"github.com/vahidlotfi71/online-store-api.git/Middlewares"
+	"github.com/vahidlotfi71/online-store-api.git/Rules"
 )
 
 func CreateOrderValidation() func(c *fiber.Ctx) error {

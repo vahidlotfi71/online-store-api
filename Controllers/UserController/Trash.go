@@ -3,8 +3,8 @@ package UserController
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/vahidlotfi71/online-store-api.git/Config"
+	"github.com/vahidlotfi71/online-store-api.git/Models/User"
 	"github.com/vahidlotfi71/online-store-api.git/Resources/UserResource"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Models/User"
 )
 
 func Trash(c *fiber.Ctx) error {

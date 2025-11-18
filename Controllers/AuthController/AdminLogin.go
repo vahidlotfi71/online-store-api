@@ -15,7 +15,7 @@ type adminLoginResp struct {
 }
 
 type adminLoginReq struct {
-	Email      string `json:"email"` // or Phone
+	Email      string `json:"email"` // or Phone البته در مدل تعریف نکردم برای آینده
 	Phone      string `json:"phone"`
 	Password   string `json:"password"`
 	RememberMe bool   `json:"remember_me"`

@@ -3,9 +3,9 @@ package ProductController
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/vahidlotfi71/online-store-api.git/Config"
+	"github.com/vahidlotfi71/online-store-api.git/Models"
 	"github.com/vahidlotfi71/online-store-api.git/Resources/ProductResource"
 	"github.com/vahidlotfi71/online-store-api.git/Utils/Http"
-	"github.com/vahidlotfi71/online-store-api.git/internal/Models"
 )
 
 func Index(c *fiber.Ctx) error {

@@ -2,56 +2,78 @@ package cmd
 
 import (
 	"fmt"
-	"os"
+	"log"
 
-	"github.com/mahdic200/weava/Config"
-	"github.com/mahdic200/weava/Utils/ProgressBars/ProgressBar"
 	"github.com/spf13/cobra"
+	"github.com/vahidlotfi71/online-store-api.git/Config"
+	"github.com/vahidlotfi71/online-store-api.git/Models"
+	"github.com/vahidlotfi71/online-store-api.git/Utils"
+	"gorm.io/gorm"
 )
 
 var force bool
 
-// migrateCmd represents the migrate command
+func init() {
+	rootCmd.AddCommand(migrateCmd)
+	migrateCmd.Flags().BoolVarP(&force, "force", "f", false, "drop all tables before migrating")
+}
+
 var migrateCmd = &cobra.Command{
 	Use:   "migrate",
-	Short: "Makes the tables",
-	Long:  `Migrates the database based on models`,
+	Short: "Create / re-create MySQL tables",
 	Run: func(cmd *cobra.Command, args []string) {
-		models := []any{
-			Models.Admin{},
-			Models.User{},
-			Models.AdminSession{},
-			Models.Session{},
+		if err := Config.Getenv(); err != nil {
+			log.Fatalf("env load: %v", err)
 		}
-		total := len(models)
-		tx := Config.DB
+
+		err := Config.Connect()
+		if err != nil {
+			log.Fatalf("db connect: %v", err)
+		}
+
+		models := []interface{}{
+			&Models.User{},
+			&Models.Admin{},
+			&Models.Product{},
+			&Models.Order{},
+			&Models.OrderItem{},
+		}
 
 		if force {
-			bar := ProgressBar.Default("Dropping All [green]Tables[reset] :", total)
-			for _, model := range models {
-				if err := tx.Migrator().DropTable(&model); err != nil {
-					fmt.Printf("%s\n", err)
-					bar.Exit()
-					os.Exit(2)
+			fmt.Println("🗑️  Dropping tables ...")
+			for _, m := range models {
+				if err := Config.DB.Migrator().DropTable(m); err != nil {
+					log.Fatalf("drop: %v", err)
 				}
-				bar.Add(1)
+			}
+			fmt.Println("✅ Tables dropped")
+		}
+
+		fmt.Println("🔨 Migrating ...")
+		for _, m := range models {
+			if err := Config.DB.AutoMigrate(m); err != nil {
+				log.Fatalf("migrate: %v", err)
 			}
 		}
 
-		bar := ProgressBar.Default("Migrating [green]Tables[reset] :", total)
-
-		for _, model := range models {
-			if err := tx.AutoMigrate(&model); err != nil {
-				fmt.Printf("%s\n", err)
-				bar.Exit()
-				os.Exit(2)
-			}
-			bar.Add(1)
-		}
+		// seed super-admin
+		seedSuperAdmin(Config.DB)
+		fmt.Println("✅ Migration & seed completed")
 	},
 }
 
-func init() {
-	rootCmd.AddCommand(migrateCmd)
-	migrateCmd.Flags().BoolVarP(&force, "force", "f", false, "Clears all tables and then migrates")
+func seedSuperAdmin(db *gorm.DB) {
+	var admin Models.Admin
+	hash, _ := Utils.GenerateHashPassword("12345678")
+	db.FirstOrCreate(&admin, Models.Admin{Phone: "09123456789"},
+		Models.Admin{
+			FirstName:  "Super",
+			LastName:   "Admin",
+			Phone:      "09123456789",
+			Address:    "Tehran",
+			NationalID: "0000000000",
+			Password:   hash,
+			Role:       "admin",
+			IsVerified: true,
+		})
 }

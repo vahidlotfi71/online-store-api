@@ -17,7 +17,7 @@ type loginResp struct {
 
 /* ----------  ساختار ورودی  ---------- */
 type loginReq struct {
-	Email      string `json:"email"`
+	Email      string `json:"email"` // در مدل نداریم برای اپدیت های اتی تعبیه شد
 	Phone      string `json:"phone"`
 	Password   string `json:"password"`
 	RememberMe bool   `json:"remember_me"`
