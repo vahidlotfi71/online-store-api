@@ -4,9 +4,9 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/vahidlotfi71/online-store-api.git/Config"
-	"github.com/vahidlotfi71/online-store-api.git/Models/Admin"
-	"github.com/vahidlotfi71/online-store-api.git/Resources/AdminResource"
+	"github.com/vahidlotfi71/online-store-api/Config"
+	"github.com/vahidlotfi71/online-store-api/Models/Admin"
+	"github.com/vahidlotfi71/online-store-api/Resources/AdminResource"
 	"gorm.io/gorm"
 )
 

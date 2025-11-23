@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/vahidlotfi71/online-store-api.git/Utils/Constants"
+	"github.com/vahidlotfi71/online-store-api/Utils/Constants"
 )
 
 var showVersion bool

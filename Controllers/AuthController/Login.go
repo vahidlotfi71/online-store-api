@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/vahidlotfi71/online-store-api.git/Config"
-	"github.com/vahidlotfi71/online-store-api.git/Models"
-	"github.com/vahidlotfi71/online-store-api.git/Utils"
+	"github.com/vahidlotfi71/online-store-api/Config"
+	"github.com/vahidlotfi71/online-store-api/Models"
+	"github.com/vahidlotfi71/online-store-api/Utils"
 )
 
 /* ----------  ساختار پاسخ  ---------- */
@@ -17,7 +17,6 @@ type loginResp struct {
 
 /* ----------  ساختار ورودی  ---------- */
 type loginReq struct {
-	Email      string `json:"email"` // در مدل نداریم برای اپدیت های اتی تعبیه شد
 	Phone      string `json:"phone"`
 	Password   string `json:"password"`
 	RememberMe bool   `json:"remember_me"`
@@ -30,18 +29,15 @@ func Login(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"message": "Invalid input"})
 	}
 
+	if body.Phone == "" {
+		return c.Status(422).JSON(fiber.Map{"message": "Phone is required"})
+	}
+
 	db := Config.DB
 	var user Models.User
 
-	/* ----  یافتن کاربر بر اساس ایمیل یا موبایل  ---- */
-	switch {
-	case body.Email != "":
-		db.Where("deleted_at IS NULL").Where("email = ?", body.Email).First(&user)
-	case body.Phone != "":
-		db.Where("deleted_at IS NULL").Where("phone = ?", body.Phone).First(&user)
-	default:
-		return c.Status(422).JSON(fiber.Map{"message": "Email or phone is required"})
-	}
+	// فقط بر اساس شماره تلفن جستجو می‌کنیم
+	db.Where("deleted_at IS NULL").Where("phone = ?", body.Phone).First(&user)
 
 	if user.ID == 0 {
 		return c.Status(404).JSON(fiber.Map{"message": "User not found"})

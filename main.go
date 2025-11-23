@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/vahidlotfi71/online-store-api.git/Config"
-	"github.com/vahidlotfi71/online-store-api.git/Routes"
-	"github.com/vahidlotfi71/online-store-api.git/cmd"
+	"github.com/vahidlotfi71/online-store-api/Config"
+	"github.com/vahidlotfi71/online-store-api/Routes"
+	"github.com/vahidlotfi71/online-store-api/cmd"
 )
 
 func main() {

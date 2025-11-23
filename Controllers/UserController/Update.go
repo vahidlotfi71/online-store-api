@@ -6,11 +6,11 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/vahidlotfi71/online-store-api.git/Config"
-	"github.com/vahidlotfi71/online-store-api.git/Models"
-	"github.com/vahidlotfi71/online-store-api.git/Models/User"
-	"github.com/vahidlotfi71/online-store-api.git/Resources/UserResource"
-	"github.com/vahidlotfi71/online-store-api.git/Utils"
+	"github.com/vahidlotfi71/online-store-api/Config"
+	"github.com/vahidlotfi71/online-store-api/Models"
+	"github.com/vahidlotfi71/online-store-api/Models/User"
+	"github.com/vahidlotfi71/online-store-api/Resources/UserResource"
+	"github.com/vahidlotfi71/online-store-api/Utils"
 	"gorm.io/gorm"
 )
 

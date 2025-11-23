@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/vahidlotfi71/online-store-api.git/Config"
-	"github.com/vahidlotfi71/online-store-api.git/Models"
-	"github.com/vahidlotfi71/online-store-api.git/Utils"
+	"github.com/vahidlotfi71/online-store-api/Config"
+	"github.com/vahidlotfi71/online-store-api/Models"
+	"github.com/vahidlotfi71/online-store-api/Utils"
 )
 
 type adminLoginResp struct {
@@ -15,7 +15,6 @@ type adminLoginResp struct {
 }
 
 type adminLoginReq struct {
-	Email      string `json:"email"` // or Phone البته در مدل تعریف نکردم برای آینده
 	Phone      string `json:"phone"`
 	Password   string `json:"password"`
 	RememberMe bool   `json:"remember_me"`
@@ -27,17 +26,15 @@ func AdminLogin(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"message": "Invalid input"})
 	}
 
+	if body.Phone == "" {
+		return c.Status(422).JSON(fiber.Map{"message": "Phone is required"})
+	}
+
 	db := Config.DB
 	var admin Models.Admin
 
-	switch {
-	case body.Email != "":
-		db.Where("deleted_at IS NULL").Where("email = ?", body.Email).First(&admin)
-	case body.Phone != "":
-		db.Where("deleted_at IS NULL").Where("phone = ?", body.Phone).First(&admin)
-	default:
-		return c.Status(422).JSON(fiber.Map{"message": "Email or phone is required"})
-	}
+	// فقط بر اساس شماره تلفن جستجو می‌کنیم
+	db.Where("deleted_at IS NULL").Where("phone = ?", body.Phone).First(&admin)
 
 	if admin.ID == 0 {
 		return c.Status(404).JSON(fiber.Map{"message": "Admin not found"})

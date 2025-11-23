@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/vahidlotfi71/online-store-api.git/Models"
-	"github.com/vahidlotfi71/online-store-api.git/Utils/Http"
+	"github.com/vahidlotfi71/online-store-api/Models"
+	"github.com/vahidlotfi71/online-store-api/Utils/Http"
 	"gorm.io/gorm"
 )
 
@@ -102,4 +102,18 @@ func SoftDelete(tx *gorm.DB, id uint) error {
 		return errors.New("product not found or already deleted")
 	}
 	return nil
+}
+
+func DecreaseStock(tx *gorm.DB, productID uint, quantity int) error {
+	var product Models.Product
+	if err := tx.First(&product, productID).Error; err != nil {
+		return err
+	}
+
+	if product.Stock < quantity {
+		return errors.New("insufficient stock")
+	}
+
+	product.Stock -= quantity
+	return tx.Save(&product).Error
 }

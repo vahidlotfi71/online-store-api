@@ -5,9 +5,9 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/vahidlotfi71/online-store-api.git/Config"
-	"github.com/vahidlotfi71/online-store-api.git/Models"
-	"github.com/vahidlotfi71/online-store-api.git/Utils"
+	"github.com/vahidlotfi71/online-store-api/Config"
+	"github.com/vahidlotfi71/online-store-api/Models"
+	"github.com/vahidlotfi71/online-store-api/Utils"
 	"gorm.io/gorm"
 )
 

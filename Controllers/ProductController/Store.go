@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/vahidlotfi71/online-store-api.git/Config"
-	"github.com/vahidlotfi71/online-store-api.git/Models/Product"
-	"github.com/vahidlotfi71/online-store-api.git/Resources/ProductResource"
+	"github.com/vahidlotfi71/online-store-api/Config"
+	"github.com/vahidlotfi71/online-store-api/Models/Product"
+	"github.com/vahidlotfi71/online-store-api/Resources/ProductResource"
 )
 
 type ProductCreateRequest struct {

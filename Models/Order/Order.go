@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/vahidlotfi71/online-store-api.git/Models"
-	"github.com/vahidlotfi71/online-store-api.git/Utils/Http"
+	"github.com/vahidlotfi71/online-store-api/Models"
+	"github.com/vahidlotfi71/online-store-api/Utils/Http"
 	"gorm.io/gorm"
 )
 
@@ -47,4 +47,42 @@ func SoftDelete(tx *gorm.DB, id uint) error {
 		return errors.New("order not found or already deleted")
 	}
 	return nil
+}
+
+func CreateOrder(tx *gorm.DB, userID uint, items []OrderItemCreateDTO) (order Models.Order, err error) {
+	total := 0.0
+	var orderItems []Models.OrderItem
+
+	for _, item := range items {
+		var product Models.Product
+		if err := tx.First(&product, item.ProductID).Error; err != nil {
+			return order, err
+		}
+
+		itemTotal := product.Price * float64(item.Quantity)
+		total += itemTotal
+
+		orderItems = append(orderItems, Models.OrderItem{
+			ProductID: item.ProductID,
+			Quantity:  item.Quantity,
+			Price:     product.Price,
+		})
+	}
+
+	order = Models.Order{
+		UserID:     userID,
+		Status:     Models.StatusPending,
+		TotalPrice: total,
+		Items:      orderItems,
+		CreateAt:   time.Now(),
+		UpdateAt:   time.Now(),
+	}
+
+	err = tx.Create(&order).Error
+	return order, err
+}
+
+type OrderItemCreateDTO struct {
+	ProductID uint `json:"product_id"`
+	Quantity  int  `json:"quantity"`
 }

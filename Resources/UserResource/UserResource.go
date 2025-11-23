@@ -4,7 +4,7 @@ package UserResource
 import (
 	"time"
 
-	"github.com/vahidlotfi71/online-store-api.git/Models"
+	"github.com/vahidlotfi71/online-store-api/Models"
 )
 
 type User struct {
