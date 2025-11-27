@@ -1,6 +1,7 @@
 package AuthController
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,9 +16,11 @@ type RegisterResponse struct {
 	User       Models.User `json:"user"`
 }
 
-// Register ثبت‌نام کاربر جدید
+// Register user registration
 func Register(c *fiber.Ctx) error {
-	// شروع یک تراکنش دیتابیس؛ در صورت خطا ۵۰۰ برمی‌گردد
+	fmt.Printf("=== REGISTER START ===\n")
+
+	// Start database transaction
 	tx := Config.DB.Begin()
 	if tx.Error != nil {
 		return c.Status(500).JSON(fiber.Map{"message": "Database connection error"})
@@ -28,70 +31,127 @@ func Register(c *fiber.Ctx) error {
 		}
 	}()
 
-	// 2) تعریف ساختار ورودی و پارس کردن بادی درخواست
-	var input struct {
-		FirstName  string `json:"first_name"`
-		LastName   string `json:"last_name"`
-		Phone      string `json:"phone"`
-		Address    string `json:"address"`
-		NationalID string `json:"national_ID"`
-		Password   string `json:"password"`
-		RememberMe bool   `json:"remember_me"`
-	}
-	if err := c.BodyParser(&input); err != nil {
+	// Use FormValue for all fields to handle UTF-8 characters properly
+	firstName := c.FormValue("first_name")
+	lastName := c.FormValue("last_name")
+	phone := c.FormValue("phone")
+	address := c.FormValue("address")
+	nationalID := c.FormValue("national_ID")
+	password := c.FormValue("password")
+
+	// Validate that no required fields are empty
+	if firstName == "" {
 		tx.Rollback()
-		return c.Status(400).JSON(fiber.Map{"message": "Invalid input data"})
+		return c.Status(400).JSON(fiber.Map{"message": "First name is required"})
+	}
+	if lastName == "" {
+		tx.Rollback()
+		return c.Status(400).JSON(fiber.Map{"message": "Last name is required"})
+	}
+	if phone == "" {
+		tx.Rollback()
+		return c.Status(400).JSON(fiber.Map{"message": "Phone is required"})
+	}
+	if address == "" {
+		tx.Rollback()
+		return c.Status(400).JSON(fiber.Map{"message": "Address is required"})
+	}
+	if nationalID == "" {
+		tx.Rollback()
+		return c.Status(400).JSON(fiber.Map{"message": "National ID is required"})
+	}
+	if password == "" {
+		tx.Rollback()
+		return c.Status(400).JSON(fiber.Map{"message": "Password is required"})
 	}
 
-	// هش کردن رمز عبور
-	hashedPass, err := Utils.GenerateHashPassword(input.Password)
+	// Hash password
+	hashedPass, err := Utils.GenerateHashPassword(password)
 	if err != nil {
 		tx.Rollback()
-		return c.Status(500).JSON(fiber.Map{"message": "خطا در رمزنگاری رمز عبور"})
+		return c.Status(500).JSON(fiber.Map{"message": "Password encryption error"})
 	}
 
-	//  ساخت مدل کاربر و درج در جدول users
+	// Create user model
 	now := time.Now()
 	user := Models.User{
-		FirstName:  input.FirstName,
-		LastName:   input.LastName,
-		Phone:      input.Phone,
-		Address:    input.Address,
-		NationalID: input.NationalID,
+		FirstName:  firstName,
+		LastName:   lastName,
+		Phone:      phone,
+		Address:    address,
+		NationalID: nationalID,
 		Password:   hashedPass,
 		Role:       "user",
 		IsVerified: false,
 		CreateAt:   now,
 		UpdateAt:   now,
 	}
+
+	// Create user with error handling
 	if err := tx.Create(&user).Error; err != nil {
+		fmt.Printf("Database Error: %v\n", err)
 		tx.Rollback()
-		return c.Status(500).JSON(fiber.Map{"message": "خطا در ثبت کاربر"})
+
+		// Detect duplicate errors
+		if isDuplicateError(err) {
+			if contains(err.Error(), "national_id") {
+				return c.Status(400).JSON(fiber.Map{"message": "National ID already registered"})
+			}
+			if contains(err.Error(), "phone") {
+				return c.Status(400).JSON(fiber.Map{"message": "Phone number already registered"})
+			}
+			return c.Status(400).JSON(fiber.Map{"message": "User already exists"})
+		}
+
+		return c.Status(500).JSON(fiber.Map{"message": "User registration error: " + err.Error()})
 	}
 
-	// تولید JWT با اطلاعات کاربر
+	// Generate JWT token
 	token, expireTime, err := Utils.CreateToken(
 		user.ID,
 		user.Role,
 		user.FirstName+" "+user.LastName,
 		user.Phone,
-		input.RememberMe,
+		false,
 	)
 	if err != nil {
 		tx.Rollback()
-		return c.Status(500).JSON(fiber.Map{"message": "خطا در ایجاد توکن"})
+		return c.Status(500).JSON(fiber.Map{"message": "Token generation error"})
 	}
 
-	//ثبت نهایی تراکنش
+	// Commit transaction
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
-		return c.Status(500).JSON(fiber.Map{"message": "خطا در ذخیره تراکنش"})
+		return c.Status(500).JSON(fiber.Map{"message": "Transaction commit error"})
 	}
 
-	// ارسال پاسخ موفقیت
+	fmt.Printf("=== USER CREATED SUCCESSFULLY ===\n")
+	fmt.Printf("User ID: %d\n", user.ID)
+
+	// Success response
 	return c.Status(200).JSON(RegisterResponse{
 		Token:      token,
 		ExpireTime: expireTime,
 		User:       user,
 	})
+}
+
+// Helper function to detect duplicate errors
+func isDuplicateError(err error) bool {
+	return err != nil && (contains(err.Error(), "Duplicate") ||
+		contains(err.Error(), "unique") ||
+		contains(err.Error(), "1062"))
+}
+
+// Helper function to check substring
+func contains(s, substr string) bool {
+	if len(s) < len(substr) {
+		return false
+	}
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }

@@ -7,17 +7,19 @@ import (
 )
 
 func Required(c *fiber.Ctx, field_name string) (passed bool, message string, flags *Flags, err error) {
-	form, err := c.MultipartForm()
-	if err != nil {
-		return false, "", nil, err
+	// Try to get value from JSON body first
+	var jsonBody map[string]interface{}
+	if err := c.BodyParser(&jsonBody); err == nil {
+		if value, exists := jsonBody[field_name]; exists && value != "" {
+			return true, "", nil, nil
+		}
 	}
 
-	value := form.Value[field_name]
-	file := form.File[field_name]
-
+	// Fallback to form value for form-data
+	value := c.FormValue(field_name)
 	message = fmt.Sprintf("The %s field is required", field_name)
 
-	if (value == nil || len(value) == 0 || value[0] == "") && (file == nil || len(file) == 0) {
+	if value == "" {
 		return false, message, nil, nil
 	}
 

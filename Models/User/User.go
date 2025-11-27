@@ -44,6 +44,10 @@ type PaginationMetadata struct {
 
 /* ---------- صفحه‌بندی (با خواندن page & per_page از کوئری) ---------- */
 func Paginate(tx *gorm.DB, c *fiber.Ctx) (users []Models.User, meta Http.PaginationMetadata, err error) {
+	// اطمینان از اینکه tx به درستی تنظیم شده است
+	if tx.Statement.Table == "" {
+		tx = tx.Model(&Models.User{})
+	}
 	tx, meta = Http.Paginate(tx, c)
 	err = tx.Find(&users).Error
 	return

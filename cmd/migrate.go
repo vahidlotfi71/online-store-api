@@ -1,8 +1,10 @@
+// cmd/migrate.go
 package cmd
 
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/vahidlotfi71/online-store-api/Config"
@@ -62,18 +64,39 @@ var migrateCmd = &cobra.Command{
 	},
 }
 
+// cmd/migrate.go
 func seedSuperAdmin(db *gorm.DB) {
-	var admin Models.Admin
-	hash, _ := Utils.GenerateHashPassword("12345678")
-	db.FirstOrCreate(&admin, Models.Admin{Phone: "09123456789"},
-		Models.Admin{
-			FirstName:  "Super",
-			LastName:   "Admin",
-			Phone:      "09123456789",
-			Address:    "Tehran",
-			NationalID: "0000000000",
-			Password:   hash,
-			Role:       "admin",
-			IsVerified: true,
-		})
+	fmt.Println("👨‍💼 Seeding super admin...")
+
+	hash, err := Utils.GenerateHashPassword("12345678")
+	if err != nil {
+		fmt.Printf("❌ Admin password hash error: %v\n", err)
+		return
+	}
+
+	// استفاده از کد ملی متفاوت
+	admin := Models.Admin{
+		FirstName:  "Super",
+		LastName:   "Admin",
+		Phone:      "09123456789",
+		Address:    "Tehran",
+		NationalID: "1111111111", // کد ملی تغییر کرد
+		Password:   hash,
+		Role:       "admin",
+		IsVerified: true,
+		CreateAt:   time.Now(),
+		UpdateAt:   time.Now(),
+	}
+
+	// اول ادمین قدیمی رو حذف کن
+	db.Unscoped().Where("phone = ?", "09123456789").Or("national_id = ?", "1111111111").Delete(&Models.Admin{})
+
+	if err := db.Create(&admin).Error; err != nil {
+		fmt.Printf("❌ Failed to create admin: %v\n", err)
+	} else {
+		fmt.Printf("✅ Super Admin CREATED!\n")
+		fmt.Printf("   📱 Phone: 09123456789\n")
+		fmt.Printf("   🔐 Password: 12345678\n")
+		fmt.Printf("   🆔 National ID: 1111111111\n")
+	}
 }
