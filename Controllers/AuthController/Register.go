@@ -36,7 +36,7 @@ func Register(c *fiber.Ctx) error {
 	lastName := c.FormValue("last_name")
 	phone := c.FormValue("phone")
 	address := c.FormValue("address")
-	nationalID := c.FormValue("national_ID")
+	nationalID := c.FormValue("national_id")
 	password := c.FormValue("password")
 
 	// Validate that no required fields are empty
@@ -83,8 +83,8 @@ func Register(c *fiber.Ctx) error {
 		Password:   hashedPass,
 		Role:       "user",
 		IsVerified: false,
-		CreateAt:   now,
-		UpdateAt:   now,
+		CreatedAt:  now,
+		UpdatedAt:  now,
 	}
 
 	// Create user with error handling
@@ -95,7 +95,7 @@ func Register(c *fiber.Ctx) error {
 		// Detect duplicate errors
 		if isDuplicateError(err) {
 			if contains(err.Error(), "national_id") {
-				return c.Status(400).JSON(fiber.Map{"message": "National ID already registered"})
+				return c.Status(400).JSON(fiber.Map{"message": "National id already registered"})
 			}
 			if contains(err.Error(), "phone") {
 				return c.Status(400).JSON(fiber.Map{"message": "Phone number already registered"})

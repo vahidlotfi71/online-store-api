@@ -25,7 +25,7 @@ func Store() func(c *fiber.Ctx) error {
 			Rules:     []Rules.ValidationRule{Rules.Required, Rules.LengthBetween(10, 255)},
 		},
 		{
-			FieldName: "national_ID",
+			FieldName: "national_id",
 			Rules:     []Rules.ValidationRule{Rules.Required, Rules.NationalID()},
 		},
 		{
@@ -47,11 +47,11 @@ func Update() func(c *fiber.Ctx) error {
 		},
 		{
 			FieldName: "phone",
-			Rules:     []Rules.ValidationRule{Rules.Required, Rules.PhoneNumber()},
+			Rules:     []Rules.ValidationRule{Rules.PhoneNumber()},
 		},
 		{
 			FieldName: "password",
-			Rules:     []Rules.ValidationRule{Rules.Required, Rules.LengthBetween(8, 16)},
+			Rules:     []Rules.ValidationRule{Rules.LengthBetween(8, 16)},
 		},
 	})
 }

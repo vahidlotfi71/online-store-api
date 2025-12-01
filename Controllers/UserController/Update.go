@@ -1,9 +1,11 @@
-// file: Controllers/UserController.go
+// FILE: Controllers/UserController/Update.go
 package UserController
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/vahidlotfi71/online-store-api/Config"
@@ -11,7 +13,6 @@ import (
 	"github.com/vahidlotfi71/online-store-api/Models/User"
 	"github.com/vahidlotfi71/online-store-api/Resources/UserResource"
 	"github.com/vahidlotfi71/online-store-api/Utils"
-	"gorm.io/gorm"
 )
 
 /* ---------- DTO ---------- */
@@ -21,29 +22,49 @@ type UserUpdateRequest struct {
 	Phone      string `json:"phone"`
 	Address    string `json:"address"`
 	NationalID string `json:"national_id"`
-	Password   string `json:"password"` // اگر خالی باشد آپدیت نمی‌شود
+	Password   string `json:"password"` // optional
 }
 
-/* ---------- ویرایش کاربر (بدون آپلود فایل) ---------- */
+/* ---------- ویرایش کاربر (ادمین یا خود کاربر) ---------- */
 func Update(c *fiber.Ctx) error {
-	// ۱) شناسه از مسیر
-	idStr := c.Params("id")
-	if idStr == "" {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "id param is required"})
+	fmt.Printf(">>> UserController.Update: id=%s, auth=%s\n", c.Params("id"), c.Get("Authorization"))
+
+	// ۱) تشخیص نقش از طریق Locals
+	var (
+		role   string
+		userID uint
+	)
+	if admin, ok := c.Locals("admin").(Models.Admin); ok {
+		role = "admin"
+		userID = admin.ID
+	} else if user, ok := c.Locals("user").(Models.User); ok {
+		role = "user"
+		userID = user.ID
+	} else {
+		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{"message": "Invalid token"})
 	}
-	num, err := strconv.ParseUint(idStr, 10, 32)
+
+	// ۲) خواندن شناسه‌ی هدف از مسیر
+	targetID, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "id must be a positive integer"})
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Invalid ID"})
 	}
-	id := uint(num)
 
-	// ۲) Parsing JSON
+	// ۳) اگر کاربر بود، فقط اجازه ویرایش خودش را دارد
+	if role == "user" && uint(targetID) != userID {
+		return c.Status(http.StatusForbidden).JSON(fiber.Map{"message": "You can only update your own profile"})
+	}
+
+	// ۴) خواندن داده‌های ورودی
 	var req UserUpdateRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Invalid JSON"})
-	}
+	req.FirstName = strings.TrimSpace(c.FormValue("first_name"))
+	req.LastName = strings.TrimSpace(c.FormValue("last_name"))
+	req.Phone = strings.TrimSpace(c.FormValue("phone"))
+	req.Address = strings.TrimSpace(c.FormValue("address"))
+	req.NationalID = strings.TrimSpace(c.FormValue("national_id"))
+	req.Password = c.FormValue("password")
 
-	// ۳) شروع تراکنش
+	// ۵) شروع تراکنش
 	tx := Config.DB.Begin()
 	if tx.Error != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "DB connection error"})
@@ -54,50 +75,71 @@ func Update(c *fiber.Ctx) error {
 		}
 	}()
 
-	// ۴) چک وجود کاربر (حذف‌نشده)
+	// ۶) چک وجود کاربر هدف (فقط حذف‌نشده‌ها)
 	var user Models.User
-	if err := tx.Where("deleted_at IS NULL").First(&user, id).Error; err != nil {
+	if err := tx.Where("deleted_at IS NULL").First(&user, targetID).Error; err != nil {
 		tx.Rollback()
-		if err == gorm.ErrRecordNotFound {
-			return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "User not found"})
-		}
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
+		return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "User not found"})
 	}
 
-	// ۵) هش پسورد (در صورت ارسال)
+	// ۷) اگر فیلدی خالی بود، از مدل فعلی بخوان
+	if req.FirstName == "" {
+		req.FirstName = user.FirstName
+	}
+	if req.LastName == "" {
+		req.LastName = user.LastName
+	}
+	if req.Phone == "" {
+		req.Phone = user.Phone
+	}
+	if req.Address == "" {
+		req.Address = user.Address
+	}
+	if req.NationalID == "" {
+		req.NationalID = user.NationalID
+	}
+
+	// ۸) هش پسورد در صورت ارسال
 	if req.Password != "" {
-		req.Password, err = Utils.GenerateHashPassword(req.Password)
+		hash, err := Utils.GenerateHashPassword(req.Password)
 		if err != nil {
 			tx.Rollback()
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Failed to hash password"})
 		}
+		req.Password = hash
 	}
 
-	// ۶) ساخت DTO برای Repository
+	// ۹) ساخت DTO
 	dto := User.UserUpdateDTO{
 		FirstName:  req.FirstName,
 		LastName:   req.LastName,
 		Phone:      req.Phone,
 		Address:    req.Address,
 		NationalID: req.NationalID,
-		Password:   req.Password, // تصویر نداریم
+		Password:   req.Password,
 	}
 
-	// ۷) به‌روزرسانی در DB
-	if err := User.Update(tx, id, dto); err != nil {
+	// ۱۰) به‌روزرسانی
+	if err := User.Update(tx, uint(targetID), dto); err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
 	}
 
-	// ۸) کامیت موفق
+	// ۱۱) کامیت
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Commit failed"})
 	}
 
-	// ۹) پاسخ استاندارد (با مدل به‌روزرسانی‌شده)
+	// ۱۲) بارگذاری مجدد برای داشتن داده‌های تازه (با دیتابیس اصلی)
+	var freshUser Models.User
+	if err := Config.DB.Where("deleted_at IS NULL").First(&freshUser, uint(targetID)).Error; err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Failed to reload user"})
+	}
+
+	// ۱۳) پاسخ
 	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"message": "User updated successfully",
-		"data":    UserResource.Single(user),
+		"data":    UserResource.Single(freshUser),
 	})
 }

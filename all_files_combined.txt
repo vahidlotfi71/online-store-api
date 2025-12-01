@@ -1,3 +1,102 @@
+===== FILE: D:\copyAllinOne\online-store-api\debug_migrate.go ===== 
+// debug_migrate.go
+package main
+
+import (
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/vahidlotfi71/online-store-api/Config"
+	"github.com/vahidlotfi71/online-store-api/Models"
+	"github.com/vahidlotfi71/online-store-api/Utils"
+	"gorm.io/gorm"
+)
+
+func main() {
+	fmt.Println("🔍 DEBUG MIGRATE AND SEED")
+
+	// 1. Load env
+	fmt.Println("1. Loading environment...")
+	if err := Config.Getenv(); err != nil {
+		log.Fatalf("❌ ENV ERROR: %v", err)
+	}
+	fmt.Println("✅ Environment loaded")
+
+	// 2. Connect to DB
+	fmt.Println("2. Connecting to database...")
+	if err := Config.Connect(); err != nil {
+		log.Fatalf("❌ DB ERROR: %v", err)
+	}
+	fmt.Println("✅ Database connected")
+
+	// 3. Show all tables
+	fmt.Println("3. Checking existing tables...")
+	var tables []string
+	Config.DB.Raw("SHOW TABLES").Scan(&tables)
+	fmt.Printf("📊 Existing tables: %v\n", tables)
+
+	// 4. Check if admin table exists
+	fmt.Println("4. Checking admin table...")
+	if Config.DB.Migrator().HasTable(&Models.Admin{}) {
+		fmt.Println("✅ Admin table exists")
+	} else {
+		fmt.Println("❌ Admin table does NOT exist")
+	}
+
+	// 5. Try to create admin directly
+	fmt.Println("5. Creating admin directly...")
+	createAdminDirectly(Config.DB)
+
+	// 6. Check if admin was created
+	fmt.Println("6. Verifying admin creation...")
+	var adminCount int64
+	Config.DB.Model(&Models.Admin{}).Count(&adminCount)
+	fmt.Printf("📊 Total admins in database: %d\n", adminCount)
+
+	if adminCount > 0 {
+		var admins []Models.Admin
+		Config.DB.Find(&admins)
+		fmt.Println("📋 Admin details:")
+		for i, admin := range admins {
+			fmt.Printf("   %d. ID: %d, Phone: %s, Name: %s %s\n", i+1, admin.ID, admin.Phone, admin.FirstName, admin.LastName)
+		}
+	}
+}
+
+func createAdminDirectly(db *gorm.DB) {
+	hash, err := Utils.GenerateHashPassword("12345678")
+	if err != nil {
+		fmt.Printf("❌ Password hash error: %v\n", err)
+		return
+	}
+
+	admin := Models.Admin{
+		FirstName:  "Super",
+		LastName:   "Admin",
+		Phone:      "09123456789",
+		Address:    "Tehran",
+		NationalID: "0000000000",
+		Password:   hash,
+		Role:       "admin",
+		IsVerified: true,
+		CreateAt:   time.Now(),
+		UpdateAt:   time.Now(),
+	}
+
+	fmt.Printf("🔨 Attempting to create admin: %s %s (%s)\n", admin.FirstName, admin.LastName, admin.Phone)
+
+	// Try to create
+	result := db.Create(&admin)
+	if result.Error != nil {
+		fmt.Printf("❌ CREATE ERROR: %v\n", result.Error)
+	} else {
+		fmt.Printf("✅ ADMIN CREATED SUCCESSFULLY! Rows affected: %d, Admin ID: %d\n",
+			result.RowsAffected, admin.ID)
+	}
+}
+ 
+ 
 ===== FILE: D:\copyAllinOne\online-store-api\main.go ===== 
 // main.go
 package main
@@ -367,8 +466,8 @@ func seedUsers(db *gorm.DB, n uint) {
 			Password:   hash,
 			Role:       "user",
 			IsVerified: true,
-			CreateAt:   time.Now(),
-			UpdateAt:   time.Now(),
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
 		}
 
 		// ایجاد کاربر
@@ -466,8 +565,8 @@ import (
 var DB *gorm.DB
 
 func Connect() error {
-	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=True&loc=Local",
-		DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME, DB_CHARSET)
+	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&collation=%s&parseTime=True&loc=Local&sql_mode=STRICT_TRANS_TABLES&interpolateParams=false",
+		DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME, DB_CHARSET, "utf8mb4_unicode_ci")
 
 	db, err := gorm.Open(mysql.Open(connection), &gorm.Config{
 		SkipDefaultTransaction: true,
@@ -1107,8 +1206,8 @@ func Register(c *fiber.Ctx) error {
 		Password:   hashedPass,
 		Role:       "user",
 		IsVerified: false,
-		CreateAt:   now,
-		UpdateAt:   now,
+		CreatedAt:  now,
+		UpdatedAt:  now,
 	}
 
 	// Create user with error handling
@@ -2171,12 +2270,12 @@ func Trash(c *fiber.Ctx) error {
  
  
 ===== FILE: D:\copyAllinOne\online-store-api\Controllers\UserController\Update.go ===== 
-// file: Controllers/UserController.go
+// FILE: Controllers/UserController/Update.go
 package UserController
 
 import (
 	"net/http"
-	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/vahidlotfi71/online-store-api/Config"
@@ -2184,7 +2283,6 @@ import (
 	"github.com/vahidlotfi71/online-store-api/Models/User"
 	"github.com/vahidlotfi71/online-store-api/Resources/UserResource"
 	"github.com/vahidlotfi71/online-store-api/Utils"
-	"gorm.io/gorm"
 )
 
 /* ---------- DTO ---------- */
@@ -2199,21 +2297,24 @@ type UserUpdateRequest struct {
 
 /* ---------- ویرایش کاربر (بدون آپلود فایل) ---------- */
 func Update(c *fiber.Ctx) error {
-	// ۱) شناسه از مسیر
-	idStr := c.Params("id")
-	if idStr == "" {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "id param is required"})
+	// ۱) استخراج اطلاعات کاربر از JWT (از طریق میان‌افزار UserAuthMiddleware)
+	userJWT, ok := c.Locals("user").(Models.User)
+	if !ok {
+		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{"message": "Invalid user token"})
 	}
-	num, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "id must be a positive integer"})
-	}
-	id := uint(num)
+	id := userJWT.ID // دیگر نیازی به خواندن id از مسیر یا بادی نیست
 
 	// ۲) Parsing JSON
 	var req UserUpdateRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Invalid JSON"})
+	req.FirstName = strings.TrimSpace(c.FormValue("first_name"))
+	req.LastName = strings.TrimSpace(c.FormValue("last_name"))
+	req.Phone = strings.TrimSpace(c.FormValue("phone"))
+	req.Address = strings.TrimSpace(c.FormValue("address"))
+	req.NationalID = strings.TrimSpace(c.FormValue("national_id"))
+	req.Password = c.FormValue("password") // اختیاری
+
+	if req.FirstName == "" || req.LastName == "" || req.Phone == "" || req.Address == "" || req.NationalID == "" {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "All fields except password are required"})
 	}
 
 	// ۳) شروع تراکنش
@@ -2227,18 +2328,16 @@ func Update(c *fiber.Ctx) error {
 		}
 	}()
 
-	// ۴) چک وجود کاربر (حذف‌نشده)
+	// ۴) چک وجود کاربر (فقط حذف‌نشده‌ها)
 	var user Models.User
 	if err := tx.Where("deleted_at IS NULL").First(&user, id).Error; err != nil {
 		tx.Rollback()
-		if err == gorm.ErrRecordNotFound {
-			return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "User not found"})
-		}
-		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
+		return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "User not found"})
 	}
 
 	// ۵) هش پسورد (در صورت ارسال)
 	if req.Password != "" {
+		var err error
 		req.Password, err = Utils.GenerateHashPassword(req.Password)
 		if err != nil {
 			tx.Rollback()
@@ -2253,7 +2352,7 @@ func Update(c *fiber.Ctx) error {
 		Phone:      req.Phone,
 		Address:    req.Address,
 		NationalID: req.NationalID,
-		Password:   req.Password, // تصویر نداریم
+		Password:   req.Password, // اگر خالی باشد، در Repository آپدیت نمی‌شود
 	}
 
 	// ۷) به‌روزرسانی در DB
@@ -2557,25 +2656,31 @@ func (Product) TableName() string { return "products" }
 ===== FILE: D:\copyAllinOne\online-store-api\Models\User.go ===== 
 package Models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type User struct {
-	ID         uint       `json:"id" gorm:"primaryKey"`
-	FirstName  string     `json:"first_name" gorm:"not null"`
-	LastName   string     `json:"last_name" gorm:"not null"`
-	Phone      string     `json:"phone" gorm:"unique;not null"`
-	Address    string     `json:"address" gorm:"not null"`
-	NationalID string     `json:"national_id" gorm:"unique;not null"`
-	Password   string     `json:"-" gorm:"not null"`
-	Role       string     `json:"-" gorm:"not null;default:user"` // مقدار پیش‌فرض user
-	IsVerified bool       `json:"is_verified" gorm:"default:false"`
-	VerifyCode string     `json:"-"  gorm:"size:6"`
-	CreateAt   time.Time  `json:"created_at"`
-	UpdateAt   time.Time  `json:"updated_at"`
-	Deleted_at *time.Time `json:"deleted_at"`
+	ID         uint           `json:"id" gorm:"primaryKey"`
+	FirstName  string         `json:"first_name" gorm:"not null"`
+	LastName   string         `json:"last_name" gorm:"not null"`
+	Phone      string         `json:"phone" gorm:"unique;not null"`
+	Address    string         `json:"address" gorm:"not null"`
+	NationalID string         `json:"national_ID" gorm:"unique;not null"`
+	Password   string         `json:"-" gorm:"not null"`
+	Role       string         `json:"-" gorm:"not null;default:user"`
+	IsVerified bool           `json:"is_verified" gorm:"default:false"`
+	VerifyCode string         `json:"-" gorm:"size:6"`
+	CreatedAt  time.Time      `json:"created_at"`     // ✅ استاندارد GORM
+	UpdatedAt  time.Time      `json:"updated_at"`     // ✅ استاندارد GORM
+	DeletedAt  gorm.DeletedAt `json:"-" gorm:"index"` // ✅ استاندارد GORM برای soft delete
 }
 
-func (User) TableName() string { return "users" }
+func (User) TableName() string {
+	return "users"
+}
  
  
 ===== FILE: D:\copyAllinOne\online-store-api\Models\Admin\Admin.go ===== 
@@ -2896,7 +3001,6 @@ func DecreaseStock(tx *gorm.DB, productID uint, quantity int) error {
  
  
 ===== FILE: D:\copyAllinOne\online-store-api\Models\User\User.go ===== 
-// file: internal/Models/User/user_repository.go
 package User
 
 import (
@@ -2942,6 +3046,10 @@ type PaginationMetadata struct {
 
 /* ---------- صفحه‌بندی (با خواندن page & per_page از کوئری) ---------- */
 func Paginate(tx *gorm.DB, c *fiber.Ctx) (users []Models.User, meta Http.PaginationMetadata, err error) {
+	// اطمینان از اینکه tx به درستی تنظیم شده است
+	if tx.Statement.Table == "" {
+		tx = tx.Model(&Models.User{})
+	}
 	tx, meta = Http.Paginate(tx, c)
 	err = tx.Find(&users).Error
 	return
@@ -2964,8 +3072,8 @@ func Create(tx *gorm.DB, dto UserCreateDTO) (user Models.User, err error) {
 		Password:   dto.Password,
 		Role:       "user",
 		IsVerified: false,
-		CreateAt:   time.Now(),
-		UpdateAt:   time.Now(),
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 	err = tx.Create(&user).Error
 	return
@@ -3201,8 +3309,8 @@ func Single(u Models.User) User {
 		Address:    u.Address,
 		NationalID: u.NationalID,
 		IsVerified: u.IsVerified,
-		CreatedAt:  u.CreateAt,
-		UpdatedAt:  u.UpdateAt,
+		CreatedAt:  u.CreatedAt,
+		UpdatedAt:  u.UpdatedAt,
 	}
 }
 

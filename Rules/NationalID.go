@@ -52,7 +52,7 @@ func NationalID() ValidationRule {
 		// Validate control digit
 		if (remainder < 2 && checkDigit != remainder) ||
 			(remainder >= 2 && checkDigit != (11-remainder)) {
-			message := fmt.Sprintf("The %s field is not a valid national ID", field_name)
+			message := fmt.Sprintf("The %s field is not a valid national id", field_name)
 			return false, message, nil, nil
 		}
 

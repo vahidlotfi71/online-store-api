@@ -28,8 +28,8 @@ func Single(u Models.User) User {
 		Address:    u.Address,
 		NationalID: u.NationalID,
 		IsVerified: u.IsVerified,
-		CreatedAt:  u.CreateAt,
-		UpdatedAt:  u.UpdateAt,
+		CreatedAt:  u.CreatedAt,
+		UpdatedAt:  u.UpdatedAt,
 	}
 }
 

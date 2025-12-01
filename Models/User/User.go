@@ -1,4 +1,3 @@
-// file: internal/Models/User/user_repository.go
 package User
 
 import (
@@ -70,8 +69,8 @@ func Create(tx *gorm.DB, dto UserCreateDTO) (user Models.User, err error) {
 		Password:   dto.Password,
 		Role:       "user",
 		IsVerified: false,
-		CreateAt:   time.Now(),
-		UpdateAt:   time.Now(),
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 	err = tx.Create(&user).Error
 	return

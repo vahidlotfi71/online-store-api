@@ -63,8 +63,8 @@ func seedUsers(db *gorm.DB, n uint) {
 			Password:   hash,
 			Role:       "user",
 			IsVerified: true,
-			CreateAt:   time.Now(),
-			UpdateAt:   time.Now(),
+			CreatedAt:  time.Now(),
+			UpdatedAt:  time.Now(),
 		}
 
 		// ایجاد کاربر

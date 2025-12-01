@@ -24,9 +24,14 @@ type UserCreateRequest struct {
 // ایجاد کابر
 func Store(c *fiber.Ctx) error {
 	// ۱) Parsing JSON
-	var req UserCreateRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Invalid JSON"})
+
+	req := UserCreateRequest{
+		FirstName:  c.FormValue("first_name"),
+		LastName:   c.FormValue("last_name"),
+		Phone:      c.FormValue("phone"),
+		Address:    c.FormValue("address"),
+		NationalID: c.FormValue("national_id"),
+		Password:   c.FormValue("password"),
 	}
 
 	// ۲) شروع تراکنش
