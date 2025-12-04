@@ -570,7 +570,7 @@ func Connect() error {
 
 	db, err := gorm.Open(mysql.Open(connection), &gorm.Config{
 		SkipDefaultTransaction: true,
-		Logger:                 logger.Default.LogMode(logger.Silent),
+		Logger:                 logger.Default.LogMode(logger.Info),
 	})
 
 	if err != nil {
@@ -1159,7 +1159,7 @@ func Register(c *fiber.Ctx) error {
 	lastName := c.FormValue("last_name")
 	phone := c.FormValue("phone")
 	address := c.FormValue("address")
-	nationalID := c.FormValue("national_ID")
+	nationalID := c.FormValue("national_id")
 	password := c.FormValue("password")
 
 	// Validate that no required fields are empty
@@ -1218,7 +1218,7 @@ func Register(c *fiber.Ctx) error {
 		// Detect duplicate errors
 		if isDuplicateError(err) {
 			if contains(err.Error(), "national_id") {
-				return c.Status(400).JSON(fiber.Map{"message": "National ID already registered"})
+				return c.Status(400).JSON(fiber.Map{"message": "National id already registered"})
 			}
 			if contains(err.Error(), "phone") {
 				return c.Status(400).JSON(fiber.Map{"message": "Phone number already registered"})
@@ -2189,9 +2189,14 @@ type UserCreateRequest struct {
 // ایجاد کابر
 func Store(c *fiber.Ctx) error {
 	// ۱) Parsing JSON
-	var req UserCreateRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Invalid JSON"})
+
+	req := UserCreateRequest{
+		FirstName:  c.FormValue("first_name"),
+		LastName:   c.FormValue("last_name"),
+		Phone:      c.FormValue("phone"),
+		Address:    c.FormValue("address"),
+		NationalID: c.FormValue("national_id"),
+		Password:   c.FormValue("password"),
 	}
 
 	// ۲) شروع تراکنش
@@ -2255,7 +2260,7 @@ import (
 
 func Trash(c *fiber.Ctx) error {
 	users, meta, err := User.Paginate(
-		Config.DB.Where("deleted_at IS NOT NULL").Order("id"),
+		Config.DB.Unscoped().Where("deleted_at IS NOT NULL").Order("id"),
 		c,
 	)
 	if err != nil {
@@ -2274,7 +2279,9 @@ func Trash(c *fiber.Ctx) error {
 package UserController
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -2292,32 +2299,49 @@ type UserUpdateRequest struct {
 	Phone      string `json:"phone"`
 	Address    string `json:"address"`
 	NationalID string `json:"national_id"`
-	Password   string `json:"password"` // اگر خالی باشد آپدیت نمی‌شود
+	Password   string `json:"password"` // optional
 }
 
-/* ---------- ویرایش کاربر (بدون آپلود فایل) ---------- */
+/* ---------- ویرایش کاربر (ادمین یا خود کاربر) ---------- */
 func Update(c *fiber.Ctx) error {
-	// ۱) استخراج اطلاعات کاربر از JWT (از طریق میان‌افزار UserAuthMiddleware)
-	userJWT, ok := c.Locals("user").(Models.User)
-	if !ok {
-		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{"message": "Invalid user token"})
-	}
-	id := userJWT.ID // دیگر نیازی به خواندن id از مسیر یا بادی نیست
+	fmt.Printf(">>> UserController.Update: id=%s, auth=%s\n", c.Params("id"), c.Get("Authorization"))
 
-	// ۲) Parsing JSON
+	// ۱) تشخیص نقش از طریق Locals
+	var (
+		role   string
+		userID uint
+	)
+	if admin, ok := c.Locals("admin").(Models.Admin); ok {
+		role = "admin"
+		userID = admin.ID
+	} else if user, ok := c.Locals("user").(Models.User); ok {
+		role = "user"
+		userID = user.ID
+	} else {
+		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{"message": "Invalid token"})
+	}
+
+	// ۲) خواندن شناسه‌ی هدف از مسیر
+	targetID, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Invalid ID"})
+	}
+
+	// ۳) اگر کاربر بود، فقط اجازه ویرایش خودش را دارد
+	if role == "user" && uint(targetID) != userID {
+		return c.Status(http.StatusForbidden).JSON(fiber.Map{"message": "You can only update your own profile"})
+	}
+
+	// ۴) خواندن داده‌های ورودی
 	var req UserUpdateRequest
 	req.FirstName = strings.TrimSpace(c.FormValue("first_name"))
 	req.LastName = strings.TrimSpace(c.FormValue("last_name"))
 	req.Phone = strings.TrimSpace(c.FormValue("phone"))
 	req.Address = strings.TrimSpace(c.FormValue("address"))
 	req.NationalID = strings.TrimSpace(c.FormValue("national_id"))
-	req.Password = c.FormValue("password") // اختیاری
+	req.Password = c.FormValue("password")
 
-	if req.FirstName == "" || req.LastName == "" || req.Phone == "" || req.Address == "" || req.NationalID == "" {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "All fields except password are required"})
-	}
-
-	// ۳) شروع تراکنش
+	// ۵) شروع تراکنش
 	tx := Config.DB.Begin()
 	if tx.Error != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "DB connection error"})
@@ -2328,49 +2352,72 @@ func Update(c *fiber.Ctx) error {
 		}
 	}()
 
-	// ۴) چک وجود کاربر (فقط حذف‌نشده‌ها)
+	// ۶) چک وجود کاربر هدف (فقط حذف‌نشده‌ها)
 	var user Models.User
-	if err := tx.Where("deleted_at IS NULL").First(&user, id).Error; err != nil {
+	if err := tx.Where("deleted_at IS NULL").First(&user, targetID).Error; err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "User not found"})
 	}
 
-	// ۵) هش پسورد (در صورت ارسال)
+	// ۷) اگر فیلدی خالی بود، از مدل فعلی بخوان
+	if req.FirstName == "" {
+		req.FirstName = user.FirstName
+	}
+	if req.LastName == "" {
+		req.LastName = user.LastName
+	}
+	if req.Phone == "" {
+		req.Phone = user.Phone
+	}
+	if req.Address == "" {
+		req.Address = user.Address
+	}
+	if req.NationalID == "" {
+		req.NationalID = user.NationalID
+	}
+
+	// ۸) هش پسورد در صورت ارسال
 	if req.Password != "" {
-		var err error
-		req.Password, err = Utils.GenerateHashPassword(req.Password)
+		hash, err := Utils.GenerateHashPassword(req.Password)
 		if err != nil {
 			tx.Rollback()
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Failed to hash password"})
 		}
+		req.Password = hash
 	}
 
-	// ۶) ساخت DTO برای Repository
+	// ۹) ساخت DTO
 	dto := User.UserUpdateDTO{
 		FirstName:  req.FirstName,
 		LastName:   req.LastName,
 		Phone:      req.Phone,
 		Address:    req.Address,
 		NationalID: req.NationalID,
-		Password:   req.Password, // اگر خالی باشد، در Repository آپدیت نمی‌شود
+		Password:   req.Password,
 	}
 
-	// ۷) به‌روزرسانی در DB
-	if err := User.Update(tx, id, dto); err != nil {
+	// ۱۰) به‌روزرسانی
+	if err := User.Update(tx, uint(targetID), dto); err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
 	}
 
-	// ۸) کامیت موفق
+	// ۱۱) کامیت
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Commit failed"})
 	}
 
-	// ۹) پاسخ استاندارد (با مدل به‌روزرسانی‌شده)
+	// ۱۲) بارگذاری مجدد برای داشتن داده‌های تازه (با دیتابیس اصلی)
+	var freshUser Models.User
+	if err := Config.DB.Where("deleted_at IS NULL").First(&freshUser, uint(targetID)).Error; err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Failed to reload user"})
+	}
+
+	// ۱۳) پاسخ
 	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"message": "User updated successfully",
-		"data":    UserResource.Single(user),
+		"data":    UserResource.Single(freshUser),
 	})
 }
  
@@ -3362,6 +3409,7 @@ func SetupRoutes(app *fiber.App) {
 	adminUser.Get("/show/:id", UserController.Show).Name("admin.user.show")
 	adminUser.Post("/store", UserValidation.Store(), UserController.Store).Name("admin.user.store")
 	adminUser.Post("/update/:id", UserValidation.Update(), UserController.Update).Name("admin.user.update")
+	// adminUser.Post("/update/:id", Middlewares.AdminAuthMiddleware, UserValidation.Update(), UserController.Update).Name("admin.user.update")
 	adminUser.Post("/delete/:id", UserController.Delete).Name("admin.user.delete")
 	adminUser.Get("/restore/:id", UserController.Restore).Name("admin.user.restore")
 	adminUser.Get("/trash", UserController.Trash).Name("admin.user.trash")
@@ -3530,7 +3578,7 @@ func NationalID() ValidationRule {
 		// Validate control digit
 		if (remainder < 2 && checkDigit != remainder) ||
 			(remainder >= 2 && checkDigit != (11-remainder)) {
-			message := fmt.Sprintf("The %s field is not a valid national ID", field_name)
+			message := fmt.Sprintf("The %s field is not a valid national id", field_name)
 			return false, message, nil, nil
 		}
 
@@ -3980,7 +4028,7 @@ func Store() func(c *fiber.Ctx) error {
 			Rules:     []Rules.ValidationRule{Rules.Required, Rules.LengthBetween(10, 255)},
 		},
 		{
-			FieldName: "national_ID",
+			FieldName: "national_id",
 			Rules:     []Rules.ValidationRule{Rules.Required, Rules.NationalID()},
 		},
 		{
@@ -4002,11 +4050,11 @@ func Update() func(c *fiber.Ctx) error {
 		},
 		{
 			FieldName: "phone",
-			Rules:     []Rules.ValidationRule{Rules.Required, Rules.PhoneNumber()},
+			Rules:     []Rules.ValidationRule{Rules.PhoneNumber()},
 		},
 		{
 			FieldName: "password",
-			Rules:     []Rules.ValidationRule{Rules.Required, Rules.LengthBetween(8, 16)},
+			Rules:     []Rules.ValidationRule{Rules.LengthBetween(8, 16)},
 		},
 	})
 }

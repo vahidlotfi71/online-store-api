@@ -9,7 +9,7 @@ import (
 
 func Trash(c *fiber.Ctx) error {
 	users, meta, err := User.Paginate(
-		Config.DB.Where("deleted_at IS NOT NULL").Order("id"),
+		Config.DB.Unscoped().Where("deleted_at IS NOT NULL").Order("id"),
 		c,
 	)
 	if err != nil {
