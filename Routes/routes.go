@@ -12,6 +12,7 @@ import (
 	"github.com/vahidlotfi71/online-store-api/Validations/Admin/ProductValidation"
 	"github.com/vahidlotfi71/online-store-api/Validations/Admin/UserValidation"
 	"github.com/vahidlotfi71/online-store-api/Validations/Auth"
+	OrderValidation "github.com/vahidlotfi71/online-store-api/Validations/Order"
 )
 
 func SetupRoutes(app *fiber.App) {
@@ -68,8 +69,7 @@ func SetupRoutes(app *fiber.App) {
 	})
 	user.Post("/profile/update", UserValidation.Update(), UserController.Update)
 	user.Get("/orders", OrderController.Index)
-	// user.Post("/orders", OrderController.Store) // بعداً اضافه شود
-
+	user.Post("/orders", OrderValidation.StoreOrder(), OrderController.Store).Name("user.order.store")
 	// ---------- PUBLIC PRODUCT ----------
 	app.Get("/products", ProductController.Index)
 	app.Get("/products/:id", ProductController.Show)

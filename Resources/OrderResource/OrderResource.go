@@ -40,8 +40,8 @@ func Single(o Models.Order) OrderDTO {
 		Status:     string(o.Status),
 		TotalPrice: o.TotalPrice,
 		Items:      items,
-		CreatedAt:  o.CreateAt,
-		UpdatedAt:  o.UpdateAt,
+		CreatedAt:  o.CreatedAt,
+		UpdatedAt:  o.UpdatedAt,
 	}
 }
 

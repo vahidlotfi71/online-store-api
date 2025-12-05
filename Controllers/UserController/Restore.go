@@ -1,7 +1,7 @@
-// file: Controllers/UserController.go
 package UserController
 
 import (
+	"log"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -26,41 +26,52 @@ func Restore(c *fiber.Ctx) error {
 	}
 	id := uint(num)
 
-	// ۲) چک وجود رکورد حذف‌شده
+	// ۲) جستجوی کاربر با Unscoped (شامل رکوردهای حذف شده)
 	var user Models.User
-	if err := Config.DB.
-		Where("id = ? AND deleted_at IS NOT NULL", id).
+	if err := Config.DB.Unscoped().
+		Where("id = ?", id).
 		First(&user).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return c.Status(fiber.StatusNotFound).
-				JSON(fiber.Map{"message": "User not found or not deleted"})
+				JSON(fiber.Map{"message": "User not found"})
 		}
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(fiber.Map{"message": err.Error()})
 	}
 
-	// ۳) بازگردانی با ORM + RowsAffected
-	result := Config.DB.
+	// ۳) بررسی اینکه کاربر واقعاً حذف شده باشد
+	if user.DeletedAt.Time.IsZero() { // استفاده از متد IsZero()
+		log.Printf("User with ID %d is not deleted (DeletedAt is zero)", id)
+		return c.Status(fiber.StatusBadRequest).
+			JSON(fiber.Map{"message": "User is not deleted"})
+	}
+
+	// ۴) بازگردانی با Unscoped
+	result := Config.DB.Unscoped().
 		Model(&Models.User{}).
-		Where("id = ? AND deleted_at IS NOT NULL", id).
-		Update("deleted_at", gorm.Expr("NULL"))
+		Where("id = ?", id).
+		Update("deleted_at", nil)
 
 	if result.Error != nil {
+		log.Printf("Failed to restore user: %v", result.Error)
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(fiber.Map{"message": result.Error.Error()})
 	}
 	if result.RowsAffected == 0 {
+		log.Printf("No rows affected when restoring user with ID %d", id)
 		return c.Status(fiber.StatusNotFound).
-			JSON(fiber.Map{"message": "User not found or not deleted"})
+			JSON(fiber.Map{"message": "User not found"})
 	}
 
-	// ۴) خواندن دوباره مدل برای پاسخ
+	// ۵) خواندن دوباره مدل برای پاسخ
 	if err := Config.DB.First(&user, id).Error; err != nil {
+		log.Printf("Failed to reload user after restore: %v", err)
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(fiber.Map{"message": err.Error()})
 	}
 
-	// ۵) پاسخ موفق
+	// ۶) پاسخ موفق
+	log.Printf("User with ID %d restored successfully", id)
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "User restored successfully",
 		"data":    UserResource.Single(user),

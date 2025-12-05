@@ -16,7 +16,7 @@ func Connect() error {
 
 	db, err := gorm.Open(mysql.Open(connection), &gorm.Config{
 		SkipDefaultTransaction: true,
-		Logger:                 logger.Default.LogMode(logger.Info),
+		Logger:                 logger.Default.LogMode(logger.Warn),
 	})
 
 	if err != nil {

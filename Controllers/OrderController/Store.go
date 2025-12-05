@@ -2,7 +2,6 @@ package OrderController
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/vahidlotfi71/online-store-api/Config"
@@ -48,19 +47,19 @@ func Store(c *fiber.Ctx) error {
 
 	for _, item := range req.Items {
 		var product Models.Product
-		if err := tx.Where("deleted_at IS NULL AND is_active = true").First(&product, item.ProductID).Error; err != nil {
+		if err := tx.Where("deleted_at IS NULL AND is_active = ?", true).First(&product, item.ProductID).Error; err != nil {
 			tx.Rollback()
 			return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "Product not found"})
-		}
-
-		if product.Stock < item.Quantity {
-			tx.Rollback()
-			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Insufficient stock for product: " + product.Name})
 		}
 
 		if item.Quantity <= 0 {
 			tx.Rollback()
 			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Quantity must be greater than zero"})
+		}
+
+		if product.Stock < item.Quantity {
+			tx.Rollback()
+			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Insufficient stock for product: " + product.Name})
 		}
 
 		itemTotal := product.Price * float64(item.Quantity)
@@ -86,8 +85,7 @@ func Store(c *fiber.Ctx) error {
 		Status:     Models.StatusPending,
 		TotalPrice: totalPrice,
 		Items:      orderItems,
-		CreateAt:   time.Now(),
-		UpdateAt:   time.Now(),
+		// نیازی به CreatedAt و UpdatedAt نیست، GORM خودش مقدار را تنظیم می‌کند
 	}
 
 	if err := tx.Create(&order).Error; err != nil {
@@ -96,7 +94,6 @@ func Store(c *fiber.Ctx) error {
 	}
 
 	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Commit failed"})
 	}
 

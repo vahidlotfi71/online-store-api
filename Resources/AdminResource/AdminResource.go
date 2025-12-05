@@ -12,7 +12,7 @@ type AdminDTO struct {
 	LastName   string    `json:"last_name"`
 	Phone      string    `json:"phone"`
 	Address    string    `json:"address"`
-	NationalID string    `json:"national_ID"`
+	NationalID string    `json:"national_id"`
 	IsVerified bool      `json:"is_verified"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`

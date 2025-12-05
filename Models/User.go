@@ -12,7 +12,7 @@ type User struct {
 	LastName   string         `json:"last_name" gorm:"not null"`
 	Phone      string         `json:"phone" gorm:"unique;not null"`
 	Address    string         `json:"address" gorm:"not null"`
-	NationalID string         `json:"national_ID" gorm:"unique;not null"`
+	NationalID string         `json:"national_id" gorm:"unique;not null"`
 	Password   string         `json:"-" gorm:"not null"`
 	Role       string         `json:"-" gorm:"not null;default:user"`
 	IsVerified bool           `json:"is_verified" gorm:"default:false"`

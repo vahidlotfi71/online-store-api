@@ -18,14 +18,14 @@ func Restore(c *fiber.Ctx) error {
 	id := uint(num)
 
 	var product Models.Product
-	if err := Config.DB.Where("deleted_at IS NOT NULL").First(&product, id).Error; err != nil {
+	if err := Config.DB.Unscoped().Where("deleted_at IS NOT NULL").First(&product, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "Product not found or not deleted"})
 		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
 	}
 
-	if err := Config.DB.Model(&product).Update("deleted_at", nil).Error; err != nil {
+	if err := Config.DB.Unscoped().Model(&product).Update("deleted_at", nil).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
 	}
 

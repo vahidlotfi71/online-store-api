@@ -39,19 +39,19 @@ func Update() func(c *fiber.Ctx) error {
 	return Middlewares.ValidationMiddleware([]Rules.FieldRules{
 		{
 			FieldName: "first_name",
-			Rules:     []Rules.ValidationRule{Rules.Required, Rules.LengthBetween(2, 255)},
+			Rules:     []Rules.ValidationRule{Rules.Optional(), Rules.LengthBetween(2, 255)},
 		},
 		{
 			FieldName: "last_name",
-			Rules:     []Rules.ValidationRule{Rules.Required, Rules.LengthBetween(2, 255)},
+			Rules:     []Rules.ValidationRule{Rules.Optional(), Rules.LengthBetween(2, 255)},
 		},
 		{
 			FieldName: "phone",
-			Rules:     []Rules.ValidationRule{Rules.PhoneNumber()},
+			Rules:     []Rules.ValidationRule{Rules.Optional(), Rules.PhoneNumber()},
 		},
 		{
 			FieldName: "password",
-			Rules:     []Rules.ValidationRule{Rules.LengthBetween(8, 16)},
+			Rules:     []Rules.ValidationRule{Rules.Optional(), Rules.LengthBetween(8, 16)},
 		},
 	})
 }

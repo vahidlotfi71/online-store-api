@@ -1,6 +1,10 @@
 package Models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type OrderStatus string
 
@@ -11,14 +15,14 @@ const (
 )
 
 type Order struct {
-	ID         uint        `gorm:"PrimaryKey" json:"id"`
-	UserID     uint        `gorm:"not null" json:"user-id"`
-	Status     OrderStatus `gorm:"default:pending" json:"status"`
-	TotalPrice float64     `gorm:"not null" json:"total_price"` //تومان
-	Items      []OrderItem `gorm:"foreignKey:OrderID" json:"items"`
-	CreateAt   time.Time   `json:"created_at"`
-	UpdateAt   time.Time   `json:"updated_at"`
-	Deleted_at *time.Time  `json:"deleted_at"`
+	ID         uint           `gorm:"PrimaryKey" json:"id"`
+	UserID     uint           `gorm:"not null" json:"user-id"`
+	Status     OrderStatus    `gorm:"default:pending" json:"status"`
+	TotalPrice float64        `gorm:"not null" json:"total_price"` //تومان
+	Items      []OrderItem    `gorm:"foreignKey:OrderID" json:"items"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt `json:"deleted_at"`
 	//Relation
 	User User `gorm:"foreignKey:UserID" json:"user,omitempty"`
 }

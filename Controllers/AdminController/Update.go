@@ -18,7 +18,7 @@ type AdminUpdateRequest struct {
 	Phone      string `json:"phone"`
 	Address    string `json:"address"`
 	NationalID string `json:"national_id"`
-	Password   string `json:"password"` // optional
+	Password   string `json:"password"`
 }
 
 func Update(c *fiber.Ctx) error {

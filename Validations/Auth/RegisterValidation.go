@@ -29,9 +29,8 @@ func Register() func(c *fiber.Ctx) error {
 			Rules:     []Rules.ValidationRule{Rules.Required, Rules.LengthBetween(10, 300)},
 		},
 		{
-			FieldName: "national_ID",
+			FieldName: "national_id",
 			Rules:     []Rules.ValidationRule{Rules.Required, Rules.NationalID()},
 		},
-		// فیلد role حذف شد چون در منطق بیزینس مقداردهی می‌شود
 	})
 }

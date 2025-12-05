@@ -74,8 +74,8 @@ func CreateOrder(tx *gorm.DB, userID uint, items []OrderItemCreateDTO) (order Mo
 		Status:     Models.StatusPending,
 		TotalPrice: total,
 		Items:      orderItems,
-		CreateAt:   time.Now(),
-		UpdateAt:   time.Now(),
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
 	err = tx.Create(&order).Error

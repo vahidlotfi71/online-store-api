@@ -1,4 +1,3 @@
-// file: Controllers/UserController.go
 package UserController
 
 import (
@@ -7,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/vahidlotfi71/online-store-api/Config"
 	"github.com/vahidlotfi71/online-store-api/Models"
+	"gorm.io/gorm"
 )
 
 // ClearTrash حذف فیزیکی دسته‌ای کاربران حذف‌شده (بدون تصویر)
@@ -42,23 +42,35 @@ func ClearTrash(c *fiber.Ctx) error {
 			JSON(fiber.Map{"message": err.Error()})
 	}
 
-	// ۴) حذف فیزیکی دسته‌ای
-	result := tx.Unscoped().Delete(&Models.User{}, "deleted_at IS NOT NULL AND id IN (?)",
-		tx.Model(&Models.User{}).Select("id").Where("deleted_at IS NOT NULL").Limit(limit))
+	// ۴) استخراج IDهای کاربران برای حذف
+	var userIDs []uint
+	for _, user := range users {
+		userIDs = append(userIDs, user.ID)
+	}
+
+	// ۵) حذف فیزیکی دسته‌ای
+	var result *gorm.DB
+	if len(userIDs) > 0 {
+		result = tx.Unscoped().Delete(&Models.User{}, "id IN ?", userIDs)
+	} else {
+		// اگر هیچ رکوردی برای حذف نیست
+		result = &gorm.DB{RowsAffected: 0}
+	}
+
 	if result.Error != nil {
 		tx.Rollback()
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(fiber.Map{"message": result.Error.Error()})
 	}
 
-	// ۵) کامیت موفق
+	// ۶) کامیت موفق
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(fiber.Map{"message": "Commit failed"})
 	}
 
-	// ۶) پاسخ موفق
+	// ۷) پاسخ موفق
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message":       "Trash cleared successfully",
 		"cleared_count": result.RowsAffected,

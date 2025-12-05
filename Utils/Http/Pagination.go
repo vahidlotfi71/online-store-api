@@ -1,4 +1,3 @@
-// file: Utils/Http/pagination.go
 package Http
 
 import (

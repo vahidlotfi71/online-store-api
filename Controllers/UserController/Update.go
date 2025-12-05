@@ -27,7 +27,7 @@ type UserUpdateRequest struct {
 
 /* ---------- ویرایش کاربر (ادمین یا خود کاربر) ---------- */
 func Update(c *fiber.Ctx) error {
-	fmt.Printf(">>> UserController.Update: id=%s, auth=%s\n", c.Params("id"), c.Get("Authorization"))
+	fmt.Printf(">>> UserController.Update: auth=%s\n", c.Get("Authorization"))
 
 	// ۱) تشخیص نقش از طریق Locals
 	var (
@@ -44,14 +44,26 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(http.StatusUnauthorized).JSON(fiber.Map{"message": "Invalid token"})
 	}
 
-	// ۲) خواندن شناسه‌ی هدف از مسیر
-	targetID, err := strconv.Atoi(c.Params("id"))
-	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Invalid ID"})
+	// ۲) تعیین شناسه کاربر هدف
+	var targetID uint
+	if role == "user" {
+		// برای کاربر عادی، فقط پروفایل خودش قابل ویرایش است
+		targetID = userID
+	} else {
+		// برای ادمین، شناسه از مسیر خوانده می‌شود
+		idStr := c.Params("id")
+		if idStr == "" {
+			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "ID parameter is required"})
+		}
+		num, err := strconv.ParseUint(idStr, 10, 32)
+		if err != nil {
+			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Invalid ID"})
+		}
+		targetID = uint(num)
 	}
 
 	// ۳) اگر کاربر بود، فقط اجازه ویرایش خودش را دارد
-	if role == "user" && uint(targetID) != userID {
+	if role == "user" && targetID != userID {
 		return c.Status(http.StatusForbidden).JSON(fiber.Map{"message": "You can only update your own profile"})
 	}
 
@@ -120,7 +132,7 @@ func Update(c *fiber.Ctx) error {
 	}
 
 	// ۱۰) به‌روزرسانی
-	if err := User.Update(tx, uint(targetID), dto); err != nil {
+	if err := User.Update(tx, targetID, dto); err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
 	}
@@ -131,9 +143,9 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Commit failed"})
 	}
 
-	// ۱۲) بارگذاری مجدد برای داشتن داده‌های تازه (با دیتابیس اصلی)
+	// ۱۲) بارگذاری مجدد برای داشتن داده‌های تازه
 	var freshUser Models.User
-	if err := Config.DB.Where("deleted_at IS NULL").First(&freshUser, uint(targetID)).Error; err != nil {
+	if err := Config.DB.Where("deleted_at IS NULL").First(&freshUser, targetID).Error; err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Failed to reload user"})
 	}
 
