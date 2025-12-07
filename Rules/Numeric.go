@@ -12,13 +12,19 @@ func Numeric() ValidationRule {
 		value := c.FormValue(field_name)
 
 		if value == "" {
-			return true, "", nil, nil
+			return true, "", nil, nil // فیلد اختیاری
 		}
 
-		if _, err := strconv.Atoi(value); err != nil {
-			message := fmt.Sprintf("The %s field must be a number", field_name)
+		num, err := strconv.Atoi(value)
+		if err != nil {
+			return false, fmt.Sprintf("The %s field must be a number", field_name), nil, nil
+		}
+
+		if num < 0 {
+			message := fmt.Sprintf("The %s field must be greater than or equal to 0", field_name)
 			return false, message, nil, nil
 		}
+
 		return true, "", nil, nil
 	}
 }

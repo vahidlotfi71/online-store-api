@@ -1,4 +1,3 @@
-// file: Resources/ProductResource/ProductResource.go
 package ProductResource
 
 import (
@@ -16,8 +15,8 @@ type ProductDTO struct {
 	Description string         `json:"description"`
 	Stock       int            `json:"stock"`
 	IsActive    bool           `json:"is_active"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	CreatedAt   time.Time      `json:"created_at"` // ✅ تغییر
+	UpdatedAt   time.Time      `json:"updated_at"` // ✅ تغییر
 	DeletedAt   gorm.DeletedAt `json:"deleted_at,omitempty"`
 }
 
@@ -30,8 +29,8 @@ func Single(p Models.Product) ProductDTO {
 		Description: p.Description,
 		Stock:       p.Stock,
 		IsActive:    p.IsActive,
-		CreatedAt:   p.CreateAt,
-		UpdatedAt:   p.UpdateAt,
+		CreatedAt:   p.CreatedAt, // ✅ تغییر از CreateAt
+		UpdatedAt:   p.UpdatedAt, // ✅ تغییر از UpdateAt
 		DeletedAt:   p.DeletedAt,
 	}
 }

@@ -1,4 +1,3 @@
-// FILE: Controllers/UserController/Update.go
 package UserController
 
 import (

@@ -36,8 +36,8 @@ func SetupRoutes(app *fiber.App) {
 	adminUser.Get("/", UserController.Index).Name("admin.user.index")
 	adminUser.Get("/show/:id", UserController.Show).Name("admin.user.show")
 	adminUser.Post("/store", UserValidation.Store(), UserController.Store).Name("admin.user.store")
-	adminUser.Post("/update/:id", UserValidation.Update(), UserController.Update).Name("admin.user.update")
-	// adminUser.Post("/update/:id", Middlewares.AdminAuthMiddleware, UserValidation.Update(), UserController.Update).Name("admin.user.update")
+	// adminUser.Post("/update/:id", UserValidation.Update(), UserController.Update).Name("admin.user.update")
+	adminUser.Post("/update/:id", Middlewares.AdminAuthMiddleware, UserValidation.Update(), UserController.Update).Name("admin.user.update")
 	adminUser.Post("/delete/:id", UserController.Delete).Name("admin.user.delete")
 	adminUser.Get("/restore/:id", UserController.Restore).Name("admin.user.restore")
 	adminUser.Get("/trash", UserController.Trash).Name("admin.user.trash")
@@ -70,6 +70,7 @@ func SetupRoutes(app *fiber.App) {
 	user.Post("/profile/update", UserValidation.Update(), UserController.Update)
 	user.Get("/orders", OrderController.Index)
 	user.Post("/orders", OrderValidation.StoreOrder(), OrderController.Store).Name("user.order.store")
+	user.Get("/orders/:id", OrderController.Show)
 	// ---------- PUBLIC PRODUCT ----------
 	app.Get("/products", ProductController.Index)
 	app.Get("/products/:id", ProductController.Show)

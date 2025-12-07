@@ -74,21 +74,19 @@ func seedSuperAdmin(db *gorm.DB) {
 		return
 	}
 
-	// استفاده از کد ملی متفاوت
 	admin := Models.Admin{
 		FirstName:  "Super",
 		LastName:   "Admin",
 		Phone:      "09123456789",
 		Address:    "Tehran",
-		NationalID: "1111111111", // کد ملی تغییر کرد
+		NationalID: "1111111111",
 		Password:   hash,
 		Role:       "admin",
 		IsVerified: true,
-		CreateAt:   time.Now(),
-		UpdateAt:   time.Now(),
+		CreatedAt:  time.Now(), // ✅ تغییر
+		UpdatedAt:  time.Now(), // ✅ تغییر
 	}
 
-	// اول ادمین قدیمی رو حذف کن
 	db.Unscoped().Where("phone = ?", "09123456789").Or("national_id = ?", "1111111111").Delete(&Models.Admin{})
 
 	if err := db.Create(&admin).Error; err != nil {

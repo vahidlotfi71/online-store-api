@@ -14,8 +14,8 @@ type AdminDTO struct {
 	Address    string    `json:"address"`
 	NationalID string    `json:"national_id"`
 	IsVerified bool      `json:"is_verified"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	CreatedAt  time.Time `json:"created_at"` // ✅ تغییر
+	UpdatedAt  time.Time `json:"updated_at"` // ✅ تغییر
 }
 
 func Single(a Models.Admin) AdminDTO {
@@ -27,8 +27,8 @@ func Single(a Models.Admin) AdminDTO {
 		Address:    a.Address,
 		NationalID: a.NationalID,
 		IsVerified: a.IsVerified,
-		CreatedAt:  a.CreateAt,
-		UpdatedAt:  a.UpdateAt,
+		CreatedAt:  a.CreatedAt, // ✅ تغییر از CreateAt
+		UpdatedAt:  a.UpdatedAt, // ✅ تغییر از UpdateAt
 	}
 }
 

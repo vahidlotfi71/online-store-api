@@ -29,7 +29,7 @@ type AdminUpdateDTO struct {
 	Phone      string
 	Address    string
 	NationalID string
-	Password   string // اگر خالی باشد آپدیت نمی‌شود
+	Password   string
 }
 
 func Paginate(tx *gorm.DB, c *fiber.Ctx) (admins []Models.Admin, meta Http.PaginationMetadata, err error) {
@@ -53,8 +53,8 @@ func Create(tx *gorm.DB, dto AdminCreateDTO) (admin Models.Admin, err error) {
 		Password:   dto.Password,
 		Role:       "admin",
 		IsVerified: false,
-		CreateAt:   time.Now(),
-		UpdateAt:   time.Now(),
+		CreatedAt:  time.Now(), // ✅ تغییر از CreateAt
+		UpdatedAt:  time.Now(), // ✅ تغییر از UpdateAt
 	}
 	err = tx.Create(&admin).Error
 	return
@@ -67,7 +67,7 @@ func Update(tx *gorm.DB, id uint, dto AdminUpdateDTO) error {
 		"phone":       dto.Phone,
 		"address":     dto.Address,
 		"national_id": dto.NationalID,
-		"updated_at":  time.Now(),
+		"updated_at":  time.Now(), // ✅ تغییر
 	}
 	if dto.Password != "" {
 		updates["password"] = dto.Password

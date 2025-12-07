@@ -32,8 +32,7 @@ func PhoneNumber() ValidationRule {
 				return true, "", nil, nil
 			}
 		}
-
-		message = fmt.Sprintf("شماره موبایل وارد شده معتبر نیست. فرمت صحیح: 09123456789")
+		message = fmt.Sprintf("The phone number format is invalid. Correct format: 09123456789")
 		return false, message, nil, nil
 	}
 }

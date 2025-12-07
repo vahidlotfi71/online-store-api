@@ -27,6 +27,9 @@ func CreateProduct() func(c *fiber.Ctx) error {
 		{
 			FieldName: "stock",
 			Rules:     []Rules.ValidationRule{Rules.Required, Rules.Numeric()},
+		}, {
+			FieldName: "is_active",
+			Rules:     []Rules.ValidationRule{Rules.Required, Rules.BooleanStrict()},
 		},
 	})
 }
@@ -46,7 +49,7 @@ func UpdateProduct() func(c *fiber.Ctx) error {
 		},
 		{
 			FieldName: "price",
-			Rules:     []Rules.ValidationRule{Rules.Optional(), Rules.Numeric()},
+			Rules:     []Rules.ValidationRule{Rules.Numeric()},
 		},
 		{
 			FieldName: "description",
@@ -55,6 +58,10 @@ func UpdateProduct() func(c *fiber.Ctx) error {
 		{
 			FieldName: "stock",
 			Rules:     []Rules.ValidationRule{Rules.Optional(), Rules.Numeric()},
+		},
+		{
+			FieldName: "is_active",
+			Rules:     []Rules.ValidationRule{Rules.Optional(), Rules.BooleanStrict()},
 		},
 		// فیلدهای دیگر...
 	})

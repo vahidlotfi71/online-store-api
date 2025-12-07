@@ -1,4 +1,3 @@
-// file: internal/Models/Product/product_repository.go
 package Product
 
 import (
@@ -10,10 +9,6 @@ import (
 	"github.com/vahidlotfi71/online-store-api/Utils/Http"
 	"gorm.io/gorm"
 )
-
-var fillable = []string{
-	"name", "brand", "price", "description", "stock", "is_active",
-}
 
 type ProductCreateDTO struct {
 	Name        string
@@ -59,8 +54,8 @@ func Create(tx *gorm.DB, dto ProductCreateDTO) (product Models.Product, err erro
 		Description: dto.Description,
 		Stock:       dto.Stock,
 		IsActive:    dto.IsActive,
-		CreateAt:    time.Now(),
-		UpdateAt:    time.Now(),
+		CreatedAt:   time.Now(), // ✅ تغییر از CreateAt
+		UpdatedAt:   time.Now(), // ✅ تغییر از UpdateAt
 	}
 	err = tx.Create(&product).Error
 	return
@@ -74,7 +69,7 @@ func Update(tx *gorm.DB, id uint, dto ProductUpdateDTO) error {
 		"description": dto.Description,
 		"stock":       dto.Stock,
 		"is_active":   dto.IsActive,
-		"updated_at":  time.Now(),
+		"updated_at":  time.Now(), // ✅ تغییر
 	}
 
 	result := tx.Model(&Models.Product{}).
