@@ -24,18 +24,18 @@ var seedCmd = &cobra.Command{
 	Use:   "seed",
 	Short: "Seed database with fake users",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("🌱 Starting seed process...")
+		fmt.Println("Starting seed process...")
 
 		if err := Config.Getenv(); err != nil {
-			log.Fatalf("❌ env: %v", err)
+			log.Fatalf("env: %v", err)
 		}
 
 		err := Config.Connect()
 		if err != nil {
-			log.Fatalf("❌ db: %v", err)
+			log.Fatalf("db: %v", err)
 		}
 
-		fmt.Printf("📊 Attempting to seed %d users...\n", users)
+		fmt.Printf("Attempting to seed %d users...\n", users)
 		seedUsers(Config.DB, users)
 		fmt.Println("✅ Seeding done")
 	},
@@ -45,7 +45,7 @@ func seedUsers(db *gorm.DB, n uint) {
 	// تولید هش پسورد
 	hash, err := Utils.GenerateHashPassword("password")
 	if err != nil {
-		fmt.Printf("❌ Password hash error: %v\n", err)
+		fmt.Printf("Password hash error: %v\n", err)
 		return
 	}
 
@@ -70,21 +70,21 @@ func seedUsers(db *gorm.DB, n uint) {
 		// ایجاد کاربر
 		result := db.Create(&user)
 		if result.Error != nil {
-			fmt.Printf("❌ Failed to create user %d: %v\n", i, result.Error)
+			fmt.Printf("Failed to create user %d: %v\n", i, result.Error)
 		} else {
 			successCount++
 			if successCount%10 == 0 {
-				fmt.Printf("✅ Created %d users so far...\n", successCount)
+				fmt.Printf("Created %d users so far...\n", successCount)
 			}
 		}
 	}
 
-	fmt.Printf("🎉 Seeding completed: %d users created successfully\n", successCount)
+	fmt.Printf("Seeding completed: %d users created successfully\n", successCount)
 
 	// نمایش نمونه از کاربران ایجاد شده
 	var sampleUsers []Models.User
 	db.Limit(3).Find(&sampleUsers)
-	fmt.Println("📋 Sample users created:")
+	fmt.Println("Sample users created:")
 	for _, u := range sampleUsers {
 		fmt.Printf("   - %s %s (%s)\n", u.FirstName, u.LastName, u.Phone)
 	}

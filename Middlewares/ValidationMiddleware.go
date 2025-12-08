@@ -35,13 +35,13 @@ func ValidationMiddleware(schema []Rules.FieldRules) func(c *fiber.Ctx) error {
 			fmt.Printf("  - Params: '%s'\n", paramValue)
 
 			if formValue == "" {
-				fmt.Printf("  ⚠️  FORM VALUE IS EMPTY!\n")
+				fmt.Printf("FORM VALUE IS EMPTY!\n")
 			}
 		}
 
 		body := c.Request().Body()
 		if len(body) == 0 {
-			fmt.Printf("⚠️  REQUEST BODY IS EMPTY\n")
+			fmt.Printf("REQUEST BODY IS EMPTY\n")
 			return c.Status(400).JSON(fiber.Map{
 				"message": "Empty request body",
 			})
@@ -50,7 +50,7 @@ func ValidationMiddleware(schema []Rules.FieldRules) func(c *fiber.Ctx) error {
 		fmt.Printf("Raw Body: %s\n", string(body))
 
 		for _, field_rules := range schema {
-			fmt.Printf("🔍 Validating field: %s\n", field_rules.FieldName)
+			fmt.Printf("Validating field: %s\n", field_rules.FieldName)
 			fieldValue := c.FormValue(field_rules.FieldName)
 			fmt.Printf("   Field value: '%s'\n", fieldValue)
 
@@ -58,24 +58,24 @@ func ValidationMiddleware(schema []Rules.FieldRules) func(c *fiber.Ctx) error {
 				fmt.Printf("   Rule %d...\n", i+1)
 				passed, message, flags, err := rule(c, field_rules.FieldName)
 				if err != nil {
-					fmt.Printf("   ❌ Rule error: %v\n", err)
+					fmt.Printf("   Rule error: %v\n", err)
 					return c.Status(500).JSON(fiber.Map{
 						"message": Providers.ErrorProvider(err),
 					})
 				}
 
 				if passed && (flags != nil && flags.IsNull) {
-					fmt.Printf("   ✅ Rule passed (is null)\n")
+					fmt.Printf("    Rule passed (is null)\n")
 					break
 				} else if !passed {
-					fmt.Printf("   ❌ Validation FAILED: %s\n", message)
+					fmt.Printf("    Validation FAILED: %s\n", message)
 					return c.Status(400).JSON(fiber.Map{
 						"message": message,
 					})
 				}
-				fmt.Printf("   ✅ Rule passed\n")
+				fmt.Printf("    Rule passed\n")
 			}
-			fmt.Printf("   ✅ All rules passed for %s\n", field_rules.FieldName)
+			fmt.Printf("   All rules passed for %s\n", field_rules.FieldName)
 		}
 
 		fmt.Printf("=== ALL VALIDATIONS PASSED ===\n")

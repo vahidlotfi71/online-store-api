@@ -50,27 +50,27 @@ func executeCLI() {
 
 // راه‌اندازی سرور
 func startServer() {
-	// 1️⃣ load env
+	// load env
 	if err := Config.Getenv(); err != nil {
 		fmt.Fprintf(os.Stderr, "Runtime Error: Could not load environment variables : %s\n", err.Error())
 		os.Exit(2)
 	}
 
-	// 2️⃣ connect DB
+	//connect DB
 	if err := Config.Connect(); err != nil {
 		fmt.Fprintf(os.Stderr, "Connection Error : Could not connect to the database\n%v\n", err.Error())
 		os.Exit(2)
 	}
 
-	// 3️⃣ build Fiber
+	//build Fiber
 	app := Config.App
 
-	// 4️⃣ register routes
+	//register routes
 	Routes.SetupRoutes(app)
 
-	// 5️⃣ start server
+	//start server
 	port := getPort()
-	fmt.Printf("🚀 Server starting on :%s\n", port)
+	fmt.Printf("Server starting on :%s\n", port)
 	if err := app.Listen(":" + port); err != nil {
 		fmt.Fprintf(os.Stderr, "Server Error: %s\n", err.Error())
 		os.Exit(2)

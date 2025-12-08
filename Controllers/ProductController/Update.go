@@ -14,7 +14,7 @@ import (
 )
 
 func Update(c *fiber.Ctx) error {
-	// ۱) دریافت شناسه محصول
+	// دریافت شناسه محصول
 	idStr := c.Params("id")
 	if idStr == "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "id param is required"})
@@ -26,7 +26,7 @@ func Update(c *fiber.Ctx) error {
 	}
 	id := uint(num)
 
-	// ۲) شروع تراکنش
+	//  شروع تراکنش
 	tx := Config.DB.Begin()
 	if tx.Error != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "DB connection error"})
@@ -38,7 +38,7 @@ func Update(c *fiber.Ctx) error {
 		}
 	}()
 
-	// ۳) یافتن محصول فعلی
+	//  یافتن محصول فعلی
 	var product Models.Product
 	if err := tx.Where("deleted_at IS NULL").First(&product, id).Error; err != nil {
 		tx.Rollback()
@@ -48,7 +48,7 @@ func Update(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
 	}
 
-	// ۴) خواندن داده‌ها
+	//  خواندن داده‌ها
 	var dto Product.ProductUpdateDTO
 
 	// Name
@@ -107,25 +107,25 @@ func Update(c *fiber.Ctx) error {
 		dto.IsActive = product.IsActive
 	}
 
-	// ۵) فراخوانی تابع Update
+	//  فراخوانی تابع Update
 	if err := Product.Update(tx, id, dto); err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
 	}
 
-	// ۶) کامیت تراکنش
+	//  کامیت تراکنش
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Commit failed"})
 	}
 
-	// ۷) بارگذاری مجدد
+	//  بارگذاری مجدد
 	var freshProduct Models.Product
 	if err := Config.DB.Where("deleted_at IS NULL").First(&freshProduct, id).Error; err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Failed to reload product"})
 	}
 
-	// ۸) پاسخ
+	//  پاسخ
 	return c.Status(http.StatusOK).JSON(fiber.Map{
 		"message": "Product updated successfully",
 		"data":    ProductResource.Single(freshProduct),

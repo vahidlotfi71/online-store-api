@@ -42,16 +42,16 @@ var migrateCmd = &cobra.Command{
 		}
 
 		if force {
-			fmt.Println("🗑️  Dropping tables ...")
+			fmt.Println("Dropping tables ...")
 			for _, m := range models {
 				if err := Config.DB.Migrator().DropTable(m); err != nil {
 					log.Fatalf("drop: %v", err)
 				}
 			}
-			fmt.Println("✅ Tables dropped")
+			fmt.Println("Tables dropped")
 		}
 
-		fmt.Println("🔨 Migrating ...")
+		fmt.Println("Migrating ...")
 		for _, m := range models {
 			if err := Config.DB.AutoMigrate(m); err != nil {
 				log.Fatalf("migrate: %v", err)
@@ -60,17 +60,17 @@ var migrateCmd = &cobra.Command{
 
 		// seed super-admin
 		seedSuperAdmin(Config.DB)
-		fmt.Println("✅ Migration & seed completed")
+		fmt.Println("Migration & seed completed")
 	},
 }
 
 // cmd/migrate.go
 func seedSuperAdmin(db *gorm.DB) {
-	fmt.Println("👨‍💼 Seeding super admin...")
+	fmt.Println("Seeding super admin...")
 
 	hash, err := Utils.GenerateHashPassword("12345678")
 	if err != nil {
-		fmt.Printf("❌ Admin password hash error: %v\n", err)
+		fmt.Printf("Admin password hash error: %v\n", err)
 		return
 	}
 
@@ -83,18 +83,18 @@ func seedSuperAdmin(db *gorm.DB) {
 		Password:   hash,
 		Role:       "admin",
 		IsVerified: true,
-		CreatedAt:  time.Now(), // ✅ تغییر
-		UpdatedAt:  time.Now(), // ✅ تغییر
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
 	db.Unscoped().Where("phone = ?", "09123456789").Or("national_id = ?", "1111111111").Delete(&Models.Admin{})
 
 	if err := db.Create(&admin).Error; err != nil {
-		fmt.Printf("❌ Failed to create admin: %v\n", err)
+		fmt.Printf("Failed to create admin: %v\n", err)
 	} else {
-		fmt.Printf("✅ Super Admin CREATED!\n")
-		fmt.Printf("   📱 Phone: 09123456789\n")
-		fmt.Printf("   🔐 Password: 12345678\n")
-		fmt.Printf("   🆔 National ID: 1111111111\n")
+		fmt.Printf("Super Admin CREATED!\n")
+		fmt.Printf(" 	Phone: 09123456789\n")
+		fmt.Printf("   	Password: 12345678\n")
+		fmt.Printf("   	National ID: 1111111111\n")
 	}
 }

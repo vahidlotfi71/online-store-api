@@ -9,16 +9,16 @@ import (
 	"gorm.io/gorm"
 )
 
-// ClearTrash حذف فیزیکی دسته‌ای کاربران حذف‌شده (بدون تصویر)
+// ClearTrash حذف فیزیکی دسته‌ای کاربران حذف‌شده
 func ClearTrash(c *fiber.Ctx) error {
-	// ۱) خواندن تعداد درخواستی (با سقف امن)
+	//) خواندن تعداد درخواستی (با سقف امن)
 	limitStr := c.Query("limit", "10")
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit <= 0 || limit > 50 {
 		limit = 10
 	}
 
-	// ۲) شروع تراکنش
+	//  شروع تراکنش
 	tx := Config.DB.Begin()
 	if tx.Error != nil {
 		return c.Status(fiber.StatusInternalServerError).
@@ -30,7 +30,7 @@ func ClearTrash(c *fiber.Ctx) error {
 		}
 	}()
 
-	// ۳) خواندن رکوردهای حذف‌شده
+	//  خواندن رکوردهای حذف‌شده
 	var users []Models.User
 	if err := tx.Unscoped().
 		Where("deleted_at IS NOT NULL").
@@ -42,13 +42,13 @@ func ClearTrash(c *fiber.Ctx) error {
 			JSON(fiber.Map{"message": err.Error()})
 	}
 
-	// ۴) استخراج IDهای کاربران برای حذف
+	//  استخراج IDهای کاربران برای حذف
 	var userIDs []uint
 	for _, user := range users {
 		userIDs = append(userIDs, user.ID)
 	}
 
-	// ۵) حذف فیزیکی دسته‌ای
+	//  حذف فیزیکی دسته‌ای
 	var result *gorm.DB
 	if len(userIDs) > 0 {
 		result = tx.Unscoped().Delete(&Models.User{}, "id IN ?", userIDs)
@@ -63,14 +63,14 @@ func ClearTrash(c *fiber.Ctx) error {
 			JSON(fiber.Map{"message": result.Error.Error()})
 	}
 
-	// ۶) کامیت موفق
+	//  کامیت موفق
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(fiber.Map{"message": "Commit failed"})
 	}
 
-	// ۷) پاسخ موفق
+	// پاسخ موفق
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message":       "Trash cleared successfully",
 		"cleared_count": result.RowsAffected,

@@ -39,32 +39,6 @@ func Register(c *fiber.Ctx) error {
 	nationalID := c.FormValue("national_id")
 	password := c.FormValue("password")
 
-	// Validate that no required fields are empty
-	if firstName == "" {
-		tx.Rollback()
-		return c.Status(400).JSON(fiber.Map{"message": "First name is required"})
-	}
-	if lastName == "" {
-		tx.Rollback()
-		return c.Status(400).JSON(fiber.Map{"message": "Last name is required"})
-	}
-	if phone == "" {
-		tx.Rollback()
-		return c.Status(400).JSON(fiber.Map{"message": "Phone is required"})
-	}
-	if address == "" {
-		tx.Rollback()
-		return c.Status(400).JSON(fiber.Map{"message": "Address is required"})
-	}
-	if nationalID == "" {
-		tx.Rollback()
-		return c.Status(400).JSON(fiber.Map{"message": "National ID is required"})
-	}
-	if password == "" {
-		tx.Rollback()
-		return c.Status(400).JSON(fiber.Map{"message": "Password is required"})
-	}
-
 	// Hash password
 	hashedPass, err := Utils.GenerateHashPassword(password)
 	if err != nil {
