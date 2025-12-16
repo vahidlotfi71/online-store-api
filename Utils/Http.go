@@ -2,14 +2,12 @@ package Utils
 
 import "github.com/gofiber/fiber/v2"
 
-// ApiError represents the structure for an API error response.
 // این ساختار برای نمایش خطاهای جزئی مانند خطاهای اعتبارسنجی استفاده می‌شود.
 type ApiError struct {
 	Field   string `json:"field,omitempty"` // فقط برای خطاهای ولیدیشن
 	Message string `json:"message"`
 }
 
-// ApiResponse represents the unified structure for all API responses.
 // این ساختار، قالب یکپارچه پاسخ‌های API (پیام، داده و خطاها) را مشخص می‌کند.
 type ApiResponse struct {
 	Message string      `json:"message"`
@@ -17,7 +15,6 @@ type ApiResponse struct {
 	Errors  []ApiError  `json:"errors,omitempty"`
 }
 
-// Response is a universal helper function to send consistent JSON responses.
 // این تابع کمکی، یک پاسخ JSON سازگار با ساختار ApiResponse تولید می‌کند.
 // status: کد وضعیت HTTP (مانند 200, 201, 400, 500)
 // message: پیامی برای کاربر در مورد عملیات انجام شده.

@@ -20,7 +20,7 @@ type OrderItemRequest struct {
 }
 
 func Store(c *fiber.Ctx) error {
-	// ✅ خواندن items از form-data
+	//خواندن items از form-data
 	itemsJSON := c.FormValue("items")
 	if itemsJSON == "" {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
@@ -28,7 +28,7 @@ func Store(c *fiber.Ctx) error {
 		})
 	}
 
-	// ✅ تبدیل JSON string به struct
+	//  تبدیل JSON string به struct
 	var req OrderCreateRequest
 	if err := json.Unmarshal([]byte(itemsJSON), &req.Items); err != nil {
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{

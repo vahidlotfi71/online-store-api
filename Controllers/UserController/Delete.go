@@ -1,4 +1,3 @@
-// file: Controllers/UserController.go
 package UserController
 
 import (
@@ -13,7 +12,7 @@ import (
 
 // Delete انجام Soft-Delete بر اساس شناسه
 func Delete(c *fiber.Ctx) error {
-	// ۱) استخراج و اعتبارسنجی شناسه
+	//  استخراج و اعتبارسنجی شناسه
 	idStr := c.Params("id")
 	if idStr == "" {
 		return c.Status(fiber.StatusBadRequest).
@@ -26,7 +25,7 @@ func Delete(c *fiber.Ctx) error {
 	}
 	id := uint(num)
 
-	// ۲) چک وجود رکورد (فقط حذف‌نشده‌ها)
+	//  چک وجود رکورد (فقط حذف‌نشده‌ها)
 	var user Models.User
 	if err := Config.DB.Where("deleted_at IS NULL").First(&user, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -51,7 +50,7 @@ func Delete(c *fiber.Ctx) error {
 			JSON(fiber.Map{"message": "User not found"})
 	}
 
-	// ۴) پاسخ موفق
+	//  پاسخ موفق
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "User deleted successfully",
 	})

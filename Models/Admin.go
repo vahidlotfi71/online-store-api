@@ -17,8 +17,8 @@ type Admin struct {
 	Role       string         `json:"-" gorm:"not null;default:admin"`
 	IsVerified bool           `json:"is_verified" gorm:"default:false"`
 	VerifyCode string         `json:"-" gorm:"size:6"`
-	CreatedAt  time.Time      `json:"created_at"` // ✅ تغییر از CreateAt
-	UpdatedAt  time.Time      `json:"updated_at"` // ✅ تغییر از UpdateAt
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
 	DeletedAt  gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 }
 

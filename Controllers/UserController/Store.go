@@ -1,4 +1,3 @@
-// file: Controllers/UserController.go
 package UserController
 
 import (
@@ -23,7 +22,7 @@ type UserCreateRequest struct {
 
 // ایجاد کابر
 func Store(c *fiber.Ctx) error {
-	// ۱) Parsing JSON
+	//  Parsing JSON
 
 	req := UserCreateRequest{
 		FirstName:  c.FormValue("first_name"),
@@ -34,7 +33,7 @@ func Store(c *fiber.Ctx) error {
 		Password:   c.FormValue("password"),
 	}
 
-	// ۲) شروع تراکنش
+	//  شروع تراکنش
 	tx := Config.DB.Begin()
 	if tx.Error != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "DB connection error"})
@@ -45,14 +44,14 @@ func Store(c *fiber.Ctx) error {
 		}
 	}()
 
-	// ۳) هش پسورد
+	//  هش پسورد
 	hashedPass, err := Utils.GenerateHashPassword(req.Password)
 	if err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Failed to hash password"})
 	}
 
-	// ۴) ساخت DTO برای Repository
+	//  ساخت DTO برای Repository
 	dto := User.UserCreateDTO{
 		FirstName:  req.FirstName,
 		LastName:   req.LastName,
@@ -62,20 +61,20 @@ func Store(c *fiber.Ctx) error {
 		Password:   hashedPass,
 	}
 
-	// ۵) درج در DB
+	//  درج در DB
 	user, err := User.Create(tx, dto)
 	if err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
 	}
 
-	// ۶) کامیت موفق
+	//  کامیت موفق
 	if err = tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Commit failed"})
 	}
 
-	// ۷) پاسخ استاندارد
+	//  پاسخ استاندارد
 	return c.Status(http.StatusCreated).JSON(fiber.Map{
 		"message": "User created successfully",
 		"data":    UserResource.Single(user),

@@ -1,4 +1,3 @@
-// file: Resources/UserResource/user_resource.go
 package UserResource
 
 import (

@@ -1,4 +1,3 @@
-// file: Resources/OrderResource/OrderResource.go
 package OrderResource
 
 import (

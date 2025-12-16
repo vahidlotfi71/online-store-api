@@ -54,8 +54,8 @@ func Create(tx *gorm.DB, dto ProductCreateDTO) (product Models.Product, err erro
 		Description: dto.Description,
 		Stock:       dto.Stock,
 		IsActive:    dto.IsActive,
-		CreatedAt:   time.Now(), // ✅ تغییر از CreateAt
-		UpdatedAt:   time.Now(), // ✅ تغییر از UpdateAt
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 	err = tx.Create(&product).Error
 	return
@@ -69,7 +69,7 @@ func Update(tx *gorm.DB, id uint, dto ProductUpdateDTO) error {
 		"description": dto.Description,
 		"stock":       dto.Stock,
 		"is_active":   dto.IsActive,
-		"updated_at":  time.Now(), // ✅ تغییر
+		"updated_at":  time.Now(),
 	}
 
 	result := tx.Model(&Models.Product{}).

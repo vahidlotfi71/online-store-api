@@ -12,7 +12,7 @@ func Numeric() ValidationRule {
 		value := c.FormValue(field_name)
 
 		if value == "" {
-			return true, "", nil, nil // فیلد اختیاری
+			return true, "", nil, nil
 		}
 
 		num, err := strconv.Atoi(value)

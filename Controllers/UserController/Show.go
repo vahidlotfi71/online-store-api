@@ -13,7 +13,7 @@ import (
 
 // Show اطلاعات یک کاربر بر اساس شناسه
 func Show(c *fiber.Ctx) error {
-	// ۱) خواندن و اعتبارسنجی شناسه از مسیر
+	//  خواندن و اعتبارسنجی شناسه از مسیر
 	idStr := c.Params("id")
 	if idStr == "" {
 		return c.Status(fiber.StatusBadRequest).
@@ -26,7 +26,7 @@ func Show(c *fiber.Ctx) error {
 	}
 	id := uint(num)
 
-	// ۲) جستجوی رکورد (فقط حذف‌نشده‌ها)
+	//  جستجوی رکورد (فقط حذف‌نشده‌ها)
 	var user Models.User
 	if dbErr := Config.DB.Where("deleted_at IS NULL").First(&user, id).Error; dbErr != nil {
 		if errors.Is(dbErr, gorm.ErrRecordNotFound) {
@@ -37,7 +37,7 @@ func Show(c *fiber.Ctx) error {
 			JSON(fiber.Map{"message": dbErr.Error()})
 	}
 
-	// ۳) پاسخ موفق
+	//  پاسخ موفق
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"data": UserResource.Single(user),
 	})

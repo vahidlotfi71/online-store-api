@@ -53,8 +53,8 @@ func Create(tx *gorm.DB, dto AdminCreateDTO) (admin Models.Admin, err error) {
 		Password:   dto.Password,
 		Role:       "admin",
 		IsVerified: false,
-		CreatedAt:  time.Now(), // ✅ تغییر از CreateAt
-		UpdatedAt:  time.Now(), // ✅ تغییر از UpdateAt
+		CreatedAt:  time.Now(), //  تغییر از CreateAt
+		UpdatedAt:  time.Now(), //  تغییر از UpdateAt
 	}
 	err = tx.Create(&admin).Error
 	return
@@ -67,7 +67,7 @@ func Update(tx *gorm.DB, id uint, dto AdminUpdateDTO) error {
 		"phone":       dto.Phone,
 		"address":     dto.Address,
 		"national_id": dto.NationalID,
-		"updated_at":  time.Now(), // ✅ تغییر
+		"updated_at":  time.Now(), // تغییر
 	}
 	if dto.Password != "" {
 		updates["password"] = dto.Password

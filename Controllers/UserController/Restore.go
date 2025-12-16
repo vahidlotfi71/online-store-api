@@ -13,7 +13,7 @@ import (
 
 // Restore بازگردانی نرم (Soft-Delete) بر اساس شناسه
 func Restore(c *fiber.Ctx) error {
-	// ۱) استخراج و اعتبارسنجی شناسه
+	//  استخراج و اعتبارسنجی شناسه
 	idStr := c.Params("id")
 	if idStr == "" {
 		return c.Status(fiber.StatusBadRequest).
@@ -26,7 +26,7 @@ func Restore(c *fiber.Ctx) error {
 	}
 	id := uint(num)
 
-	// ۲) جستجوی کاربر با Unscoped (شامل رکوردهای حذف شده)
+	//  جستجوی کاربر با Unscoped (شامل رکوردهای حذف شده)
 	var user Models.User
 	if err := Config.DB.Unscoped().
 		Where("id = ?", id).
@@ -39,14 +39,14 @@ func Restore(c *fiber.Ctx) error {
 			JSON(fiber.Map{"message": err.Error()})
 	}
 
-	// ۳) بررسی اینکه کاربر واقعاً حذف شده باشد
+	//  بررسی اینکه کاربر واقعاً حذف شده باشد
 	if user.DeletedAt.Time.IsZero() { // استفاده از متد IsZero()
 		log.Printf("User with ID %d is not deleted (DeletedAt is zero)", id)
 		return c.Status(fiber.StatusBadRequest).
 			JSON(fiber.Map{"message": "User is not deleted"})
 	}
 
-	// ۴) بازگردانی با Unscoped
+	//  بازگردانی با Unscoped
 	result := Config.DB.Unscoped().
 		Model(&Models.User{}).
 		Where("id = ?", id).
@@ -63,14 +63,14 @@ func Restore(c *fiber.Ctx) error {
 			JSON(fiber.Map{"message": "User not found"})
 	}
 
-	// ۵) خواندن دوباره مدل برای پاسخ
+	//  خواندن دوباره مدل برای پاسخ
 	if err := Config.DB.First(&user, id).Error; err != nil {
 		log.Printf("Failed to reload user after restore: %v", err)
 		return c.Status(fiber.StatusInternalServerError).
 			JSON(fiber.Map{"message": err.Error()})
 	}
 
-	// ۶) پاسخ موفق
+	//  پاسخ موفق
 	log.Printf("User with ID %d restored successfully", id)
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "User restored successfully",

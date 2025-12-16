@@ -26,9 +26,9 @@ type UserUpdateRequest struct {
 
 /* ---------- ویرایش کاربر (ادمین یا خود کاربر) ---------- */
 func Update(c *fiber.Ctx) error {
-	fmt.Printf(">>> UserController.Update: auth=%s\n", c.Get("Authorization"))
+	fmt.Printf("UserController.Update: auth=%s\n", c.Get("Authorization"))
 
-	// ۱) تشخیص نقش از طریق Locals
+	//  تشخیص نقش از طریق Locals
 	var (
 		role   string
 		userID uint
@@ -61,12 +61,12 @@ func Update(c *fiber.Ctx) error {
 		targetID = uint(num)
 	}
 
-	// ۳) اگر کاربر بود، فقط اجازه ویرایش خودش را دارد
+	//  اگر کاربر بود، فقط اجازه ویرایش خودش را دارد
 	if role == "user" && targetID != userID {
 		return c.Status(http.StatusForbidden).JSON(fiber.Map{"message": "You can only update your own profile"})
 	}
 
-	// ۴) خواندن داده‌های ورودی
+	//  خواندن داده‌های ورودی
 	var req UserUpdateRequest
 	req.FirstName = strings.TrimSpace(c.FormValue("first_name"))
 	req.LastName = strings.TrimSpace(c.FormValue("last_name"))
@@ -75,7 +75,7 @@ func Update(c *fiber.Ctx) error {
 	req.NationalID = strings.TrimSpace(c.FormValue("national_id"))
 	req.Password = c.FormValue("password")
 
-	// ۵) شروع تراکنش
+	//  شروع تراکنش
 	tx := Config.DB.Begin()
 	if tx.Error != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "DB connection error"})
@@ -86,14 +86,14 @@ func Update(c *fiber.Ctx) error {
 		}
 	}()
 
-	// ۶) چک وجود کاربر هدف (فقط حذف‌نشده‌ها)
+	//  چک وجود کاربر هدف (فقط حذف‌نشده‌ها)
 	var user Models.User
 	if err := tx.Where("deleted_at IS NULL").First(&user, targetID).Error; err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "User not found"})
 	}
 
-	// ۷) اگر فیلدی خالی بود، از مدل فعلی بخوان
+	//  اگر فیلدی خالی بود، از مدل فعلی بخوان
 	if req.FirstName == "" {
 		req.FirstName = user.FirstName
 	}
@@ -110,7 +110,7 @@ func Update(c *fiber.Ctx) error {
 		req.NationalID = user.NationalID
 	}
 
-	// ۸) هش پسورد در صورت ارسال
+	//  هش پسورد در صورت ارسال
 	if req.Password != "" {
 		hash, err := Utils.GenerateHashPassword(req.Password)
 		if err != nil {
@@ -120,7 +120,7 @@ func Update(c *fiber.Ctx) error {
 		req.Password = hash
 	}
 
-	// ۹) ساخت DTO
+	//  ساخت DTO
 	dto := User.UserUpdateDTO{
 		FirstName:  req.FirstName,
 		LastName:   req.LastName,
@@ -130,19 +130,19 @@ func Update(c *fiber.Ctx) error {
 		Password:   req.Password,
 	}
 
-	// ۱۰) به‌روزرسانی
+	//  به‌روزرسانی
 	if err := User.Update(tx, targetID, dto); err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": err.Error()})
 	}
 
-	// ۱۱) کامیت
+	//  کامیت
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Commit failed"})
 	}
 
-	// ۱۲) بارگذاری مجدد برای داشتن داده‌های تازه
+	//  بارگذاری مجدد برای داشتن داده‌های تازه
 	var freshUser Models.User
 	if err := Config.DB.Where("deleted_at IS NULL").First(&freshUser, targetID).Error; err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Failed to reload user"})
