@@ -1,0 +1,36 @@
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: shop_db
+    environment:
+      MYSQL_DATABASE: shop_go
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - shop_network
+
+  api:
+    build: .
+    container_name: shop_api
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+    depends_on:
+      - mysql
+    networks:
+      - shop_network
+
+volumes:
+  mysql_data:
+
+networks:
+  shop_network:
+    driver: bridge

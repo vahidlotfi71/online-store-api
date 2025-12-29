@@ -19,9 +19,8 @@ var (
 )
 
 func Getenv() error {
-	if err := godotenv.Load(); err != nil {
-		return err
-	}
+	_ = godotenv.Load()
+	// این تغییر باعث می‌شود اگر فایل .env در کانتینر نبود، برنامه مقادیر را از تنظیمات داکر-کامپوز بگیرد.
 	DB_HOST = os.Getenv("DB_HOST")
 	DB_PORT = os.Getenv("DB_PORT")
 	DB_USER = os.Getenv("DB_USER")
